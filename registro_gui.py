@@ -29,7 +29,7 @@ CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor",
 class RegistroApp:
     def __init__(self, root):
         self.root = root
-        self.lotes_por_sucursal = {}  # Ensure this exists for lotes logic
+        self.lotes_por_sucursal = {s: [f"L{i} - {s}" for i in range(1, 33)] for s in SUCURSALES}
         # Cambiar título y poner icono
         self.root.title("Los Cielos Farm E/S")
         try:
