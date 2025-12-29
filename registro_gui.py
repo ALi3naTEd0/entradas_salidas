@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import sys
 # Soporte para ejecutable PyInstaller: buscar archivo en la misma carpeta que el .exe o script
 if getattr(sys, 'frozen', False):
-    BASE_PATH = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.dirname(sys.executable)
+    # Para recursos internos usa _MEIPASS, pero para archivos de usuario usa la carpeta del exe
+    BASE_PATH = os.path.dirname(sys.executable)
 else:
     BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
@@ -17,8 +18,8 @@ CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
 # Listas de opciones
 VARIEDADES = [
     "AK-47", "APPLE FRITTER", "BANANA LATTE", "BLACKBERRY HONEY",
-    "GRAN JEFA", "MICHAEL JORDAN", "KANDY KUSH", "KING KUSH BREATH",
-    "RECON", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
+    "GRAN JEFA", "KANDY KUSH", "KING KUSH BREATH", "MICHAEL JORDAN",
+    "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ"]
@@ -106,9 +107,17 @@ class RegistroApp:
                     writer.writerow(CAMPOS + ["tipo"])
                     for fila in nuevas_filas:
                         writer.writerow(fila)
-                            # (Eliminado: lógica de conteo de plantas, no debe estar aquí)
-        
-        self.crear_widgets()
+        # Ahora sí, agregar el nuevo registro
+        try:
+            with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                if archivo_nuevo:
+                    writer.writerow(CAMPOS + ["tipo"])
+                writer.writerow(datos)
+            messagebox.showinfo("Éxito", "Registro guardado correctamente.")
+            self.limpiar_campos()
+        except Exception as e:
+            messagebox.showerror("Error al guardar", f"No se pudo guardar el registro en el archivo:\n{CSV_FILE}\n\nError: {e}\n\nVerifique permisos de escritura en la carpeta.")
 
     def crear_widgets(self):
         tab_control = ttk.Notebook(self.root)
@@ -149,7 +158,7 @@ class RegistroApp:
         self.colaborador.set("")
         self.supervisor.set("")
         self.gramos.set("")
-        self.plantas.set("")
+        self.plantas.set("1")
 
         # Sucursal (la posición se ajusta dinámicamente)
         self.sucursal_label = ttk.Label(frame, text="Sucursal:")
