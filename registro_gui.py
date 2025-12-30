@@ -25,9 +25,102 @@ SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
-CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote"]
+CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "quien"]
 
 class RegistroApp:
+    def abrir_editor_registros(self):
+        if not os.path.exists(CSV_FILE):
+            messagebox.showerror("Error", "No hay datos registrados.")
+            return
+        editor = tk.Toplevel(self.root)
+        editor.title("Editar registros existentes")
+        editor.geometry("1200x500")
+        frame = ttk.Frame(editor)
+        frame.pack(fill="both", expand=True)
+        # Tabla con scroll
+        tree = ttk.Treeview(frame, columns=CAMPOS+["tipo"], show="headings", height=20)
+        for col in CAMPOS+["tipo"]:
+            tree.heading(col, text=col)
+            tree.column(col, width=100, anchor="center")
+        vsb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        tree.configure(yscroll=vsb.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        # Cargar datos
+        with open(CSV_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+        for i, row in enumerate(rows):
+            values = [row.get(c, "") for c in CAMPOS+["tipo"]]
+            tree.insert("", "end", iid=str(i), values=values)
+        # Edición en línea de motivo y quien
+        def editar_celda(event):
+            item = tree.focus()
+            if not item:
+                return
+            col = tree.identify_column(event.x)
+            col_idx = int(col.replace('#','')) - 1
+            if col_idx not in [CAMPOS.index("motivo"), CAMPOS.index("quien")]:
+                return
+            x, y, width, height = tree.bbox(item, col)
+            valor_actual = tree.set(item, CAMPOS[col_idx])
+            # Determinar opciones para motivo y quien
+            if col_idx == CAMPOS.index("motivo"):
+                tipo = tree.set(item, "tipo")
+                if tipo == "Salida":
+                    opciones = ["venta", "pre-rolls", "mix"]
+                else:
+                    opciones = ["inventario", "trim", "traslado", "flor"]
+                combo = ttk.Combobox(tree, values=opciones, state="readonly")
+                combo.place(x=x, y=y, width=width, height=height)
+                combo.set(valor_actual)
+                combo.focus()
+                def guardar_combo(e=None):
+                    tree.set(item, CAMPOS[col_idx], combo.get())
+                    combo.destroy()
+                combo.bind("<Return>", guardar_combo)
+                combo.bind("<FocusOut>", guardar_combo)
+            elif col_idx == CAMPOS.index("quien"):
+                motivo = tree.set(item, "motivo")
+                if motivo == "venta":
+                    quienes = list({tree.set(iid, "quien") for iid in tree.get_children() if tree.set(iid, "quien")})
+                    combo = ttk.Combobox(tree, values=quienes, state="normal")
+                    combo.place(x=x, y=y, width=width, height=height)
+                    combo.set(valor_actual)
+                    combo.focus()
+                    def guardar_combo(e=None):
+                        tree.set(item, CAMPOS[col_idx], combo.get())
+                        combo.destroy()
+                    combo.bind("<Return>", guardar_combo)
+                    combo.bind("<FocusOut>", guardar_combo)
+                else:
+                    entry = tk.Entry(tree)
+                    entry.place(x=x, y=y, width=width, height=height)
+                    entry.insert(0, valor_actual)
+                    entry.focus()
+                    def guardar_edicion(e=None):
+                        tree.set(item, CAMPOS[col_idx], entry.get())
+                        entry.destroy()
+                    entry.bind("<Return>", guardar_edicion)
+                    entry.bind("<FocusOut>", guardar_edicion)
+        tree.bind("<Double-1>", editar_celda)
+        # Botón guardar cambios
+        def guardar_cambios():
+            nuevos = []
+            for iid in tree.get_children():
+                nuevos.append([tree.set(iid, c) for c in CAMPOS+["tipo"]])
+            with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(CAMPOS+["tipo"])
+                for fila in nuevos:
+                    writer.writerow(fila)
+            messagebox.showinfo("Éxito", "Cambios guardados en el archivo.")
+            editor.destroy()
+        btn_guardar = ttk.Button(editor, text="Guardar cambios", command=guardar_cambios)
+        btn_guardar.pack(pady=8)
+
     def __init__(self, root):
         self.root = root
         self.lotes_por_sucursal = {s: [f"L{i} - {s}" for i in range(1, 33)] for s in SUCURSALES}
@@ -40,9 +133,14 @@ class RegistroApp:
         except Exception as e:
             pass  # Si hay error, continuar sin icono
         self.crear_widgets()
+        # Botón para abrir el editor de registros
+        btn_editar = ttk.Button(self.root, text="Editar registros existentes", command=self.abrir_editor_registros)
+        btn_editar.grid(row=1, column=0, pady=5, sticky="w")
     def guardar_registro(self):
         tipo = self.tipo_movimiento.get()
         plantas_val = self.plantas.get() if tipo != "Salida" else "1"
+        motivo = self.motivo.get()
+        quien = self.quien.get() if (tipo == "Salida" and motivo == "venta") else ""
         # Siempre incluir 'plantas' en ambas entradas y salidas (para Salida, valor por defecto '1')
         datos = [
             self.fecha.get(),
@@ -53,13 +151,17 @@ class RegistroApp:
             self.supervisor.get(),
             self.sucursal.get(),
             self.lote.get(),
+            motivo,
+            quien,
             tipo
         ]
         # Validación básica
         if tipo == "Salida":
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get()]
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo]
+            if motivo == "venta":
+                campos_obligatorios.append(quien)
         else:
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), self.colaborador.get()]
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), self.colaborador.get(), motivo]
         if not all(campos_obligatorios):
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
@@ -75,36 +177,33 @@ class RegistroApp:
             return
         # Escribir en CSV
         archivo_nuevo = not os.path.exists(CSV_FILE)
-        # Si el archivo existe pero no tiene la columna 'tipo' o 'plantas', rehacer encabezado y migrar filas
+        # Si el archivo existe pero no tiene la columna 'motivo' o 'quien', rehacer encabezado y migrar filas
         if not archivo_nuevo:
             with open(CSV_FILE, 'r', encoding='utf-8') as f:
                 filas = list(csv.reader(f))
             encabezado = filas[0] if filas else []
-            if encabezado != CAMPOS + ["tipo"]:
-                # Migrar todas las filas a la nueva estructura
+            esperado = CAMPOS + ["tipo"]
+            if encabezado != esperado:
                 nuevas_filas = []
                 for fila in filas[1:]:
-                    # Si la fila ya tiene todas las columnas, solo ajustar orden si es necesario
-                    if len(fila) == len(CAMPOS) + 1:
-                        nuevas_filas.append(fila)
-                    else:
-                        # Intentar mapear por nombre de encabezado si posible
-                        fila_dict = dict(zip(encabezado, fila))
-                        nueva = [
-                            fila_dict.get("fecha", ""),
-                            fila_dict.get("variedad", ""),
-                            fila_dict.get("colaborador", ""),
-                            fila_dict.get("gramos", ""),
-                            fila_dict.get("plantas", "1"),
-                            fila_dict.get("supervisor", ""),
-                            fila_dict.get("sucursal", ""),
-                            fila_dict.get("lote", ""),
-                            fila_dict.get("tipo", "Entrada")
-                        ]
-                        nuevas_filas.append(nueva)
+                    fila_dict = dict(zip(encabezado, fila))
+                    nueva = [
+                        fila_dict.get("fecha", ""),
+                        fila_dict.get("variedad", ""),
+                        fila_dict.get("colaborador", ""),
+                        fila_dict.get("gramos", ""),
+                        fila_dict.get("plantas", "1"),
+                        fila_dict.get("supervisor", ""),
+                        fila_dict.get("sucursal", ""),
+                        fila_dict.get("lote", ""),
+                        fila_dict.get("motivo", ""),
+                        fila_dict.get("quien", ""),
+                        fila_dict.get("tipo", "Entrada")
+                    ]
+                    nuevas_filas.append(nueva)
                 with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerow(CAMPOS + ["tipo"])
+                    writer.writerow(esperado)
                     for fila in nuevas_filas:
                         writer.writerow(fila)
         # Ahora sí, agregar el nuevo registro
@@ -145,6 +244,14 @@ class RegistroApp:
         self.tipo_movimiento.grid(row=0, column=3, padx=5, pady=2)
         self.tipo_movimiento.set("Entrada")
 
+        # Motivo y Quién (visibilidad dinámica)
+        self.label_motivo = ttk.Label(frame, text="Motivo:")
+        self.motivo = ttk.Combobox(frame, state="readonly")
+        self.label_quien = ttk.Label(frame, text="¿A quién? (si venta):")
+        self.quien = ttk.Entry(frame)
+        self.motivo.set("")
+        self.quien.delete(0, "end")
+
         # Colaborador y Supervisor (visibilidad dinámica)
         self.label_colaborador = ttk.Label(frame, text="Colaborador:")
         self.colaborador = ttk.Combobox(frame, values=COLABORADORES, state="readonly")
@@ -175,9 +282,29 @@ class RegistroApp:
         # Botón Guardar (la posición se ajusta dinámicamente)
         self.btn_guardar = ttk.Button(frame, text="Guardar Registro", command=self.guardar_registro)
 
-        # Mostrar/ocultar campos según tipo
+        # Mostrar/ocultar campos según tipo y motivo
         def on_tipo_change(event=None):
-            if self.tipo_movimiento.get() == "Salida":
+            tipo = self.tipo_movimiento.get()
+            # Motivos según tipo
+            if tipo == "Salida":
+                motivos = ["venta", "pre-rolls", "mix"]
+            else:
+                motivos = ["inventario", "trim", "traslado", "flor"]
+            self.motivo['values'] = motivos
+            self.motivo.set("")
+            self.label_motivo.grid(row=6, column=0, sticky="e")
+            self.motivo.grid(row=6, column=1, padx=5, pady=2)
+            # Quién solo si salida y motivo=venta
+            def on_motivo_change(event2=None):
+                if self.tipo_movimiento.get() == "Salida" and self.motivo.get() == "venta":
+                    self.label_quien.grid(row=7, column=0, sticky="e")
+                    self.quien.grid(row=7, column=1, padx=5, pady=2)
+                else:
+                    self.label_quien.grid_remove()
+                    self.quien.grid_remove()
+            self.motivo.bind("<<ComboboxSelected>>", on_motivo_change)
+            on_motivo_change()
+            if tipo == "Salida":
                 self.label_colaborador.grid_remove()
                 self.colaborador.grid_remove()
                 self.label_supervisor.grid(row=2, column=0, sticky="e")
@@ -190,6 +317,8 @@ class RegistroApp:
                 # Sucursal y lote en filas 4 y 5
                 self.sucursal_label_row = 4
                 self.lote_label_row = 5
+                self.label_motivo.grid(row=6, column=0, sticky="e")
+                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             else:
                 self.label_colaborador.grid(row=2, column=0, sticky="e")
                 self.colaborador.grid(row=2, column=1, padx=5, pady=2)
@@ -199,9 +328,11 @@ class RegistroApp:
                 self.gramos.grid(row=4, column=1, padx=5, pady=2)
                 self.label_plantas.grid(row=5, column=0, sticky="e")
                 self.plantas.grid(row=5, column=1, padx=5, pady=2)
-                # Sucursal y lote en filas 6 y 7
-                self.sucursal_label_row = 6
-                self.lote_label_row = 7
+                # Sucursal y lote en filas 8 y 9
+                self.sucursal_label_row = 8
+                self.lote_label_row = 9
+                self.label_motivo.grid(row=6, column=0, sticky="e")
+                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             # Reubicar sucursal y lote según el tipo
             self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
             self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
@@ -243,20 +374,31 @@ class RegistroApp:
         self.filtro_g_lote.set("")
         self.filtro_g_lote['values'] = ["Todas"]
 
+        # Filtro Motivo
+        ttk.Label(graficos_frame, text="Motivo:").grid(row=5, column=0, sticky="e")
+        self.filtro_g_motivo = ttk.Combobox(graficos_frame, values=["Todas", "inventario", "trim", "traslado", "flor", "venta", "pre-rolls", "mix"], state="readonly")
+        self.filtro_g_motivo.grid(row=5, column=1, padx=5, pady=2)
+        self.filtro_g_motivo.set("")
+
+        # Filtro Quién (solo para ventas)
+        ttk.Label(graficos_frame, text="¿A quién? (si venta):").grid(row=6, column=0, sticky="e")
+        self.filtro_g_quien = ttk.Entry(graficos_frame)
+        self.filtro_g_quien.grid(row=6, column=1, padx=5, pady=2)
+
         # Campo a graficar
-        ttk.Label(graficos_frame, text="Campo a graficar:").grid(row=5, column=0, sticky="e")
-        self.campo_grafico = ttk.Combobox(graficos_frame, values=["variedad", "sucursal", "colaborador", "supervisor", "lote"], state="readonly")
-        self.campo_grafico.grid(row=5, column=1, padx=5, pady=2)
+        ttk.Label(graficos_frame, text="Campo a graficar:").grid(row=7, column=0, sticky="e")
+        self.campo_grafico = ttk.Combobox(graficos_frame, values=["variedad", "sucursal", "colaborador", "supervisor", "lote", "motivo", "quien"], state="readonly")
+        self.campo_grafico.grid(row=7, column=1, padx=5, pady=2)
         self.campo_grafico.set("variedad")
 
         # Switch para modo gráfico o lista
         self.modo_lista = tk.BooleanVar(value=False)
         self.switch_modo = ttk.Checkbutton(graficos_frame, text="Mostrar como lista descriptiva", variable=self.modo_lista)
-        self.switch_modo.grid(row=6, column=0, columnspan=2, pady=2)
+        self.switch_modo.grid(row=8, column=0, columnspan=2, pady=2)
 
-        # Botón para mostrar gráfico general o lista
+        # Botón para mostrar gráfico general o lista (debe ir debajo del switch, en la siguiente fila)
         self.btn_grafico_general = ttk.Button(graficos_frame, text="Mostrar resultado", command=self.mostrar_grafico_general_unico)
-        self.btn_grafico_general.grid(row=7, column=0, columnspan=2, pady=10)
+        self.btn_grafico_general.grid(row=9, column=0, columnspan=2, pady=10)
     def actualizar_lotes_graficos(self, event=None):
         # Leer los lotes disponibles según los filtros actuales en la pestaña de gráficos
         sucursal = self.filtro_g_sucursal.get().strip()
@@ -314,12 +456,16 @@ class RegistroApp:
             "sucursal": self.filtro_g_sucursal.get().strip(),
             "colaborador": self.filtro_g_colaborador.get().strip(),
             "supervisor": self.filtro_g_supervisor.get().strip(),
-            "lote": self.filtro_g_lote.get().strip()
+            "lote": self.filtro_g_lote.get().strip(),
+            "motivo": self.filtro_g_motivo.get().strip(),
+            "quien": self.filtro_g_quien.get().strip()
         }
         for k, v in filtros.items():
             if v and v != "Todas":
                 if k == "lote":
                     df = df[df[k] == v]
+                elif k == "quien":
+                    df = df[df[k].str.contains(v, case=False, na=False)]
                 else:
                     df = df[df[k].str.upper() == v.upper()]
         if df.empty:
@@ -328,14 +474,12 @@ class RegistroApp:
         campo = self.campo_grafico.get()
         # Switch entre modo gráfico y modo lista
         if self.modo_lista.get():
-            # ...existing code for lista descriptiva...
             filtros_aplicados = [k for k, v in filtros.items() if v and v != "Todas"]
             lista_descriptiva = []
             if len(filtros_aplicados) == 1 and campo in filtros_aplicados and campo != "sucursal":
                 valor = filtros[campo]
-                df_filtrado = df[df[campo].str.upper() == valor.upper()]
+                df_filtrado = df[df[campo].astype(str).str.upper() == valor.upper()]
                 resumen = df_filtrado.groupby("sucursal")["gramos"].sum().sort_values(ascending=False)
-                # Solo contar plantas de tipo Entrada dentro del subconjunto filtrado
                 def plantas_entrada(subdf):
                     if "tipo" in subdf.columns and "plantas" in subdf.columns:
                         mask_entrada = (subdf["tipo"].str.lower() == "entrada") | (subdf["tipo"].str.strip() == "")
@@ -354,7 +498,6 @@ class RegistroApp:
                 def lotes_con_plantas(subdf):
                     lotes = subdf["lote"].value_counts().sort_index()
                     gramos_por_lote = subdf.groupby("lote")["gramos"].sum()
-                    # Solo contar plantas de tipo Entrada por lote
                     if "tipo" in subdf.columns:
                         plantas_por_lote = subdf[subdf["tipo"].str.lower() == "entrada"].groupby("lote").size()
                     else:
@@ -370,7 +513,6 @@ class RegistroApp:
                     lista_descriptiva.append(f"Sucursal: {suc}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_sucursal.iloc[i]}")
             else:
                 resumen = df.groupby(campo)["gramos"].sum().sort_values(ascending=False)
-                # Solo contar plantas de tipo Entrada dentro del subconjunto filtrado
                 if "tipo" in df.columns and "plantas" in df.columns:
                     mask_entrada = (df["tipo"].str.lower() == "entrada") | (df["tipo"].str.strip() == "")
                     conteos = df.loc[mask_entrada].groupby(campo)["plantas"].apply(lambda x: x.astype(float).sum()).reindex(resumen.index, fill_value=0)
@@ -381,7 +523,6 @@ class RegistroApp:
                 def lotes_con_plantas_grupo(subdf):
                     lotes = subdf["lote"].value_counts().sort_index()
                     gramos_por_lote = subdf.groupby("lote")["gramos"].sum()
-                    # Solo contar plantas de tipo Entrada por lote
                     if "tipo" in subdf.columns:
                         plantas_por_lote = subdf[subdf["tipo"].str.lower() == "entrada"].groupby("lote").size()
                     else:
@@ -394,8 +535,16 @@ class RegistroApp:
                     return ', '.join(resultado)
                 lotes_por_grupo = df.groupby(campo).apply(lotes_con_plantas_grupo).reindex(resumen.index, fill_value='')
                 for i, grupo in enumerate(resumen.index):
-                    lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
-            # Total general de plantas (solo Entrada)
+                    # Mostrar motivo y quien si corresponde
+                    if campo == "motivo":
+                        subdf = df[df[campo] == grupo]
+                        quienes = subdf["quien"].dropna().unique()
+                        quienes_str = f"\n  Quién(es): {', '.join([str(q) for q in quienes if str(q).strip()])}" if len(quienes) > 0 else ""
+                        lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}{quienes_str}")
+                    elif campo == "quien":
+                        lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
+                    else:
+                        lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
             if "tipo" in df.columns and "plantas" in df.columns:
                 total_plantas = df[df["tipo"].str.lower() == "entrada"]["plantas"].astype(float).sum()
             elif "plantas" in df.columns:
@@ -403,7 +552,6 @@ class RegistroApp:
             else:
                 total_plantas = 0
             total_plantas_str = f"\nTOTAL GENERAL DE PLANTAS (solo Entrada): {int(total_plantas)}\n"
-            # Estadísticas adicionales
             total_registros = len(df)
             suma_gramos = df["gramos"].sum()
             promedio_gramos = df["gramos"].mean()
@@ -415,7 +563,6 @@ class RegistroApp:
                 f"  Promedio gramos: {promedio_gramos:.2f}\n"
                 f"  Máximo registro: {max_registro.to_dict()}\n"
             )
-            # Mostrar en ventana
             resultado = "\n\n".join(lista_descriptiva) + total_plantas_str + estadisticas
             self.mostrar_lista_descriptiva(resultado)
         else:
@@ -553,6 +700,8 @@ class RegistroApp:
         self.lote.set("")
         self.variedad.set("")
         self.sucursal.set("")
+        self.motivo.set("")
+        self.quien.delete(0, "end")
         # Solo actualiza la fecha si es necesario, y de forma segura
         try:
             self.fecha.set_date(datetime.now().date())
