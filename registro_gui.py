@@ -292,6 +292,7 @@ class RegistroApp:
                 motivos = ["inventario", "trim", "traslado", "flor"]
             self.motivo['values'] = motivos
             self.motivo.set("")
+            # Motivo siempre en la fila 6
             self.label_motivo.grid(row=6, column=0, sticky="e")
             self.motivo.grid(row=6, column=1, padx=5, pady=2)
             # Quién solo si salida y motivo=venta
@@ -317,8 +318,12 @@ class RegistroApp:
                 # Sucursal y lote en filas 4 y 5
                 self.sucursal_label_row = 4
                 self.lote_label_row = 5
-                self.label_motivo.grid(row=6, column=0, sticky="e")
-                self.motivo.grid(row=6, column=1, padx=5, pady=2)
+                self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
+                self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
+                self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
+                self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
+                # Botón guardar en la fila 8 (después de motivo y quien)
+                self.btn_guardar.grid(row=8, column=0, columnspan=2, pady=10)
             else:
                 self.label_colaborador.grid(row=2, column=0, sticky="e")
                 self.colaborador.grid(row=2, column=1, padx=5, pady=2)
@@ -331,14 +336,11 @@ class RegistroApp:
                 # Sucursal y lote en filas 8 y 9
                 self.sucursal_label_row = 8
                 self.lote_label_row = 9
-                self.label_motivo.grid(row=6, column=0, sticky="e")
-                self.motivo.grid(row=6, column=1, padx=5, pady=2)
-            # Reubicar sucursal y lote según el tipo
-            self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
-            self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
-            self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
-            self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-            self.btn_guardar.grid(row=self.lote_label_row+1, column=0, columnspan=2, pady=10)
+                self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
+                self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
+                self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
+                self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
+                self.btn_guardar.grid(row=self.lote_label_row+1, column=0, columnspan=2, pady=10)
         self.tipo_movimiento.bind("<<ComboboxSelected>>", on_tipo_change)
         on_tipo_change()
 
