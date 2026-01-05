@@ -7,25 +7,118 @@ from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
+import requests
+import io
+
 # Soporte para ejecutable PyInstaller: buscar archivo en la misma carpeta que el .exe o script
 if getattr(sys, 'frozen', False):
-    # Para recursos internos usa _MEIPASS, pero para archivos de usuario usa la carpeta del exe
     BASE_PATH = os.path.dirname(sys.executable)
 else:
     BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
+
+# Archivo de configuración para credenciales de GitHub Gist
+CONFIG_FILE = os.path.join(BASE_PATH, "gist_config.txt")
+
+def cargar_config():
+    """Carga la configuración del Gist desde archivo gist_config.txt"""
+    if not os.path.exists(CONFIG_FILE):
+        # Crear archivo de ejemplo
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            f.write("TU_GIST_ID_AQUI\nTU_TOKEN_AQUI\n")
+        print(f"ERROR: Configura tus credenciales en: {CONFIG_FILE}")
+        print("Línea 1: GIST_ID")
+        print("Línea 2: TOKEN de GitHub")
+        sys.exit(1)
+    
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        lineas = f.read().strip().split("\n")
+    
+    if len(lineas) < 2:
+        print(f"ERROR: El archivo {CONFIG_FILE} debe tener 2 líneas:")
+        print("Línea 1: GIST_ID")
+        print("Línea 2: TOKEN de GitHub")
+        sys.exit(1)
+    
+    gist_id = lineas[0].strip()
+    token = lineas[1].strip()
+    
+    if gist_id == "TU_GIST_ID_AQUI" or token == "TU_TOKEN_AQUI":
+        print(f"ERROR: Edita el archivo {CONFIG_FILE} con tus credenciales reales")
+        sys.exit(1)
+    
+    return gist_id, token
+
+# Cargar configuración
+GIST_ID, GIST_TOKEN = cargar_config()
+GIST_FILENAME = "registro.csv"
+
+# Archivo local para caché/backup
+CSV_FILE = os.path.join(BASE_PATH, "registro_local.csv")
+
+def leer_gist():
+    """Lee el contenido del CSV desde GitHub Gist"""
+    try:
+        url = f"https://api.github.com/gists/{GIST_ID}"
+        headers = {"Authorization": f"token {GIST_TOKEN}"}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        gist_data = response.json()
+        contenido = gist_data["files"][GIST_FILENAME]["content"]
+        return contenido
+    except Exception as e:
+        print(f"Error leyendo Gist: {e}")
+        return None
+
+def escribir_gist(contenido):
+    """Escribe el contenido del CSV a GitHub Gist"""
+    try:
+        url = f"https://api.github.com/gists/{GIST_ID}"
+        headers = {
+            "Authorization": f"token {GIST_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        data = {
+            "files": {
+                GIST_FILENAME: {
+                    "content": contenido
+                }
+            }
+        }
+        response = requests.patch(url, headers=headers, json=data, timeout=10)
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        print(f"Error escribiendo Gist: {e}")
+        return False
+
+def sincronizar_desde_gist():
+    """Descarga el CSV del Gist y lo guarda localmente"""
+    contenido = leer_gist()
+    if contenido:
+        with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+            f.write(contenido)
+        return True
+    return False
+
+def sincronizar_a_gist():
+    """Sube el CSV local al Gist"""
+    if os.path.exists(CSV_FILE):
+        with open(CSV_FILE, "r", encoding="utf-8") as f:
+            contenido = f.read()
+        return escribir_gist(contenido)
+    return False
 
 # Listas de opciones
 VARIEDADES = [
     "AK-47", "APPLE FRITTER", "BANANA LATTE", "BLACKBERRY HONEY",
     "GRAN JEFA", "KANDY KUSH", "KING KUSH BREATH", "MICHAEL JORDAN",
-    "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
+    "MIX", "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
-CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "quien"]
+CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "cliente", "no_aplicacion"]
 
 class RegistroApp:
     def abrir_editor_registros(self):
@@ -37,42 +130,150 @@ class RegistroApp:
         editor.geometry("1200x500")
         frame = ttk.Frame(editor)
         frame.pack(fill="both", expand=True)
+        # Filtros de fecha (desde/hasta)
+        date_filter_frame = ttk.Frame(frame)
+        date_filter_frame.grid(row=0, column=0, sticky="ew", columnspan=2, pady=5)
+        ttk.Label(date_filter_frame, text="Fecha desde:").pack(side="left", padx=5)
+        fecha_desde_var = DateEntry(date_filter_frame, date_pattern='yyyy-mm-dd', width=12)
+        fecha_desde_var.pack(side="left", padx=5)
+        fecha_desde_var.delete(0, "end")
+        ttk.Label(date_filter_frame, text="Fecha hasta:").pack(side="left", padx=5)
+        fecha_hasta_var = DateEntry(date_filter_frame, date_pattern='yyyy-mm-dd', width=12)
+        fecha_hasta_var.pack(side="left", padx=5)
+        fecha_hasta_var.delete(0, "end")
+
+        # Filtros tipo Excel
+        filter_frame = ttk.Frame(frame)
+        filter_frame.grid(row=1, column=0, sticky="ew", columnspan=2)
+        filter_vars = {}
+        def get_unique_values(col):
+            vals = set(row.get(col, "") for row in rows)
+            return sorted([v for v in vals if v])
+
+        # Cargar datos primero para los filtros
+        with open(CSV_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+        columns = CAMPOS + ["tipo"]
+        # Crear filtros para todas las columnas excepto fecha (que tiene filtro de rango arriba)
+        for j, col in enumerate(columns):
+            filter_frame.grid_columnconfigure(j, weight=1, uniform="filtros")
+        for j, col in enumerate(columns):
+            if col == "fecha":
+                # Placeholder para fecha (el filtro de rango está arriba)
+                lbl = ttk.Label(filter_frame, text="(filtro arriba)", font=("Arial", 8))
+                lbl.grid(row=0, column=j, padx=0, pady=1, sticky="nsew")
+            else:
+                var = tk.StringVar()
+                filter_vars[col] = var
+                unique_vals = get_unique_values(col)
+                if 1 < len(unique_vals) <= 20:
+                    cb = ttk.Combobox(filter_frame, textvariable=var, values=["(Todos)"]+unique_vals, state="readonly")
+                    cb.set("(Todos)")
+                    cb.grid(row=0, column=j, padx=0, pady=1, sticky="nsew")
+                else:
+                    ent = ttk.Entry(filter_frame, textvariable=var)
+                    ent.grid(row=0, column=j, padx=0, pady=1, sticky="nsew")
+
         # Tabla con scroll
-        tree = ttk.Treeview(frame, columns=CAMPOS+["tipo"], show="headings", height=20)
-        for col in CAMPOS+["tipo"]:
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=20)
+        for col in columns:
             tree.heading(col, text=col)
             tree.column(col, width=100, anchor="center")
         vsb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         tree.configure(yscroll=vsb.set)
-        tree.grid(row=0, column=0, sticky="nsew")
-        vsb.grid(row=0, column=1, sticky="ns")
-        frame.grid_rowconfigure(0, weight=1)
+        tree.grid(row=2, column=0, sticky="nsew")
+        vsb.grid(row=2, column=1, sticky="ns")
+        frame.grid_rowconfigure(2, weight=1)
         frame.grid_columnconfigure(0, weight=1)
-        # Cargar datos
-        with open(CSV_FILE, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
-        for i, row in enumerate(rows):
-            values = [row.get(c, "") for c in CAMPOS+["tipo"]]
-            tree.insert("", "end", iid=str(i), values=values)
-        # Edición en línea de motivo y quien
+
+
+        # Frame para suma y botón PDF
+        bottom_frame = ttk.Frame(editor)
+        bottom_frame.pack(fill="x", pady=6)
+        suma_gramos_var = tk.StringVar()
+        suma_label = ttk.Label(bottom_frame, textvariable=suma_gramos_var, font=("Arial", 11, "bold"))
+        suma_label.pack(side="left", padx=10)
+
+        def cargar_treeview(filtrados):
+            tree.delete(*tree.get_children())
+            suma = 0.0
+            for i, row in enumerate(filtrados):
+                values = [row.get(c, "") for c in columns]
+                tree.insert("", "end", iid=str(i), values=values)
+                try:
+                    gramos = float(row.get("gramos", 0))
+                    suma += gramos
+                except Exception:
+                    pass
+            suma_gramos_var.set(f"Suma de gramos: {suma:.2f}")
+
+        cargar_treeview(rows)
+
+        def aplicar_filtros(*args):
+            filtrados = rows
+            # Filtrar por rango de fechas
+            fecha_desde = fecha_desde_var.get().strip()
+            fecha_hasta = fecha_hasta_var.get().strip()
+            if fecha_desde or fecha_hasta:
+                def en_rango_fecha(row):
+                    fecha_str = row.get("fecha", "")
+                    if not fecha_str:
+                        return False
+                    try:
+                        fecha = datetime.strptime(fecha_str, "%Y-%m-%d")
+                        if fecha_desde:
+                            desde = datetime.strptime(fecha_desde, "%Y-%m-%d")
+                            if fecha < desde:
+                                return False
+                        if fecha_hasta:
+                            hasta = datetime.strptime(fecha_hasta, "%Y-%m-%d")
+                            if fecha > hasta:
+                                return False
+                        return True
+                    except:
+                        return True
+                filtrados = [r for r in filtrados if en_rango_fecha(r)]
+            # Filtrar por otros campos (excepto fecha)
+            for col in columns:
+                if col == "fecha":
+                    continue
+                val = filter_vars[col].get()
+                if val and val != "(Todos)":
+                    if len(val) > 0:
+                        filtrados = [r for r in filtrados if val.lower() in str(r.get(col, "")).lower()]
+            cargar_treeview(filtrados)
+
+        # Asociar eventos a los filtros
+        for col in columns:
+            if col == "fecha":
+                continue
+            var = filter_vars[col]
+            var.trace_add('write', aplicar_filtros)
+        # Asociar eventos a los filtros de fecha
+        fecha_desde_var.bind("<<DateEntrySelected>>", aplicar_filtros)
+        fecha_desde_var.bind("<KeyRelease>", aplicar_filtros)
+        fecha_hasta_var.bind("<<DateEntrySelected>>", aplicar_filtros)
+        fecha_hasta_var.bind("<KeyRelease>", aplicar_filtros)
+        # Edición en línea de motivo y cliente
         def editar_celda(event):
             item = tree.focus()
             if not item:
                 return
             col = tree.identify_column(event.x)
             col_idx = int(col.replace('#','')) - 1
-            if col_idx not in [CAMPOS.index("motivo"), CAMPOS.index("quien")]:
+            if col_idx not in [CAMPOS.index("motivo"), CAMPOS.index("cliente"), CAMPOS.index("no_aplicacion")]:
                 return
             x, y, width, height = tree.bbox(item, col)
             valor_actual = tree.set(item, CAMPOS[col_idx])
-            # Determinar opciones para motivo y quien
+            # Determinar opciones para motivo y cliente
             if col_idx == CAMPOS.index("motivo"):
                 tipo = tree.set(item, "tipo")
                 if tipo == "Salida":
                     opciones = ["venta", "pre-rolls", "mix"]
                 else:
-                    opciones = ["inventario", "trim", "traslado", "flor"]
+                    opciones = ["inventario", "trim", "traslado", "flor", "mix"]
                 combo = ttk.Combobox(tree, values=opciones, state="readonly")
                 combo.place(x=x, y=y, width=width, height=height)
                 combo.set(valor_actual)
@@ -82,11 +283,11 @@ class RegistroApp:
                     combo.destroy()
                 combo.bind("<Return>", guardar_combo)
                 combo.bind("<FocusOut>", guardar_combo)
-            elif col_idx == CAMPOS.index("quien"):
+            elif col_idx == CAMPOS.index("cliente"):
                 motivo = tree.set(item, "motivo")
                 if motivo == "venta":
-                    quienes = list({tree.set(iid, "quien") for iid in tree.get_children() if tree.set(iid, "quien")})
-                    combo = ttk.Combobox(tree, values=quienes, state="normal")
+                    clientes = list({tree.set(iid, "cliente") for iid in tree.get_children() if tree.set(iid, "cliente")})
+                    combo = ttk.Combobox(tree, values=clientes, state="normal")
                     combo.place(x=x, y=y, width=width, height=height)
                     combo.set(valor_actual)
                     combo.focus()
@@ -105,21 +306,69 @@ class RegistroApp:
                         entry.destroy()
                     entry.bind("<Return>", guardar_edicion)
                     entry.bind("<FocusOut>", guardar_edicion)
+            elif col_idx == CAMPOS.index("no_aplicacion"):
+                entry = tk.Entry(tree)
+                entry.place(x=x, y=y, width=width, height=height)
+                entry.insert(0, valor_actual)
+                entry.focus()
+                def guardar_no_aplicacion(e=None):
+                    tree.set(item, CAMPOS[col_idx], entry.get())
+                    entry.destroy()
+                entry.bind("<Return>", guardar_no_aplicacion)
+                entry.bind("<FocusOut>", guardar_no_aplicacion)
         tree.bind("<Double-1>", editar_celda)
         # Botón guardar cambios
         def guardar_cambios():
             nuevos = []
             for iid in tree.get_children():
-                nuevos.append([tree.set(iid, c) for c in CAMPOS+["tipo"]])
+                nuevos.append([tree.set(iid, c) for c in columns])
             with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(CAMPOS+["tipo"])
+                writer.writerow(columns)
                 for fila in nuevos:
                     writer.writerow(fila)
-            messagebox.showinfo("Éxito", "Cambios guardados en el archivo.")
+            # Sincronizar a GitHub Gist
+            if sincronizar_a_gist():
+                messagebox.showinfo("Éxito", "Cambios guardados y sincronizados correctamente.")
+            else:
+                messagebox.showwarning("Advertencia", "Cambios guardados localmente, pero no se pudo sincronizar con la nube.")
             editor.destroy()
-        btn_guardar = ttk.Button(editor, text="Guardar cambios", command=guardar_cambios)
-        btn_guardar.pack(pady=8)
+
+        def exportar_pdf():
+            try:
+                from fpdf import FPDF
+            except ImportError:
+                messagebox.showerror("Error", "Debe instalar el paquete 'fpdf' para exportar a PDF.\nEjecute: pip install fpdf")
+                return
+            from tkinter import filedialog
+            archivo = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("Archivo PDF", "*.pdf")], title="Guardar como PDF")
+            if not archivo:
+                return
+            # Obtener los datos filtrados actualmente en el treeview
+            datos = []
+            for iid in tree.get_children():
+                datos.append([tree.set(iid, c) for c in columns])
+            pdf = FPDF(orientation='L', unit='mm', format='A4')
+            pdf.add_page()
+            pdf.set_font("Arial", size=9)
+            # Encabezados
+            col_width = max(25, 277 // len(columns))
+            for col in columns:
+                pdf.cell(col_width, 8, col, border=1)
+            pdf.ln()
+            # Filas
+            for fila in datos:
+                for valor in fila:
+                    pdf.cell(col_width, 8, str(valor), border=1)
+                pdf.ln()
+            try:
+                pdf.output(archivo)
+                messagebox.showinfo("Éxito", f"Registros exportados a {archivo}")
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo exportar el PDF:\n{e}")
+
+        btn_pdf = ttk.Button(bottom_frame, text="Exportar a PDF", command=exportar_pdf)
+        btn_pdf.pack(side="right", padx=10)
 
     def __init__(self, root):
         self.root = root
@@ -132,36 +381,108 @@ class RegistroApp:
                 self.root.iconphoto(True, tk.PhotoImage(file=icon_path))
         except Exception as e:
             pass  # Si hay error, continuar sin icono
+        
+        # Sincronizar desde Gist al iniciar
+        self.root.config(cursor="wait")
+        self.root.update()
+        if sincronizar_desde_gist():
+            print("Datos sincronizados desde GitHub Gist")
+            self.gist_conectado = True
+        else:
+            print("No se pudo sincronizar, usando datos locales")
+            self.gist_conectado = False
+        self.root.config(cursor="")
+        
         self.crear_widgets()
+        self.crear_barra_estado()
+        
         # Botón para abrir el editor de registros
-        btn_editar = ttk.Button(self.root, text="Editar registros existentes", command=self.abrir_editor_registros)
+        btn_editar = ttk.Button(self.root, text="Filtrar registro", command=self.abrir_editor_registros)
         btn_editar.grid(row=1, column=0, pady=5, sticky="w")
+    
+    def crear_barra_estado(self):
+        """Crea la barra de estado inferior con indicador de conexión"""
+        import webbrowser
+        
+        status_frame = ttk.Frame(self.root)
+        status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
+        
+        # Indicador de conexión
+        if self.gist_conectado:
+            color = "#2ecc71"  # Verde
+            texto = "● Conectado"
+        else:
+            color = "#e74c3c"  # Rojo
+            texto = "● Sin conexión"
+        
+        self.lbl_status = tk.Label(status_frame, text=texto, fg=color, font=("Arial", 9, "bold"))
+        self.lbl_status.pack(side="left", padx=(0, 10))
+        
+        # Link al Gist
+        gist_url = f"https://gist.github.com/{GIST_ID}"
+        lbl_link = tk.Label(status_frame, text=gist_url, fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
+        lbl_link.pack(side="left")
+        lbl_link.bind("<Button-1>", lambda e: webbrowser.open(gist_url))
+        
+        # Botón para refrescar conexión
+        btn_refresh = ttk.Button(status_frame, text="↻ Sincronizar", width=12, command=self.refrescar_conexion)
+        btn_refresh.pack(side="right", padx=5)
+    
+    def refrescar_conexion(self):
+        """Refresca la conexión con el Gist"""
+        self.root.config(cursor="wait")
+        self.root.update()
+        
+        if sincronizar_desde_gist():
+            self.gist_conectado = True
+            self.lbl_status.config(text="● Conectado", fg="#2ecc71")
+            messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Gist")
+        else:
+            self.gist_conectado = False
+            self.lbl_status.config(text="● Sin conexión", fg="#e74c3c")
+            messagebox.showwarning("Error", "No se pudo conectar con GitHub Gist")
+        
+        self.root.config(cursor="")
+
     def guardar_registro(self):
         tipo = self.tipo_movimiento.get()
-        plantas_val = self.plantas.get() if tipo != "Salida" else "1"
+        plantas_val = self.plantas.get() if tipo != "Salida" else "0"
         motivo = self.motivo.get()
-        quien = self.quien.get() if (tipo == "Salida" and motivo == "venta") else ""
+        cliente = self.cliente.get() if (tipo == "Salida" and motivo == "venta") else ""
         # Siempre incluir 'plantas' en ambas entradas y salidas (para Salida, valor por defecto '1')
+        # Si es salida, guardar gramos como negativo
+        gramos_val = self.gramos.get()
+        try:
+            gramos_float = float(gramos_val)
+            if tipo == "Salida":
+                gramos_val = str(-abs(gramos_float))
+            else:
+                gramos_val = str(abs(gramos_float))
+        except Exception:
+            pass  # Si no es numérico, se guarda como está y la validación lo atrapará después
+        no_aplicacion_val = ""  # Se edita desde Filtrar registro
         datos = [
             self.fecha.get(),
             self.variedad.get(),
             self.colaborador.get() if tipo != "Salida" else "",
-            self.gramos.get(),
+            gramos_val,
             plantas_val,
             self.supervisor.get(),
             self.sucursal.get(),
             self.lote.get(),
             motivo,
-            quien,
+            cliente,
+            no_aplicacion_val,
             tipo
         ]
         # Validación básica
         if tipo == "Salida":
             campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo]
             if motivo == "venta":
-                campos_obligatorios.append(quien)
+                campos_obligatorios.append(cliente)
         else:
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), self.colaborador.get(), motivo]
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo]
+            # Colaborador es opcional (se puede dejar en blanco)
         if not all(campos_obligatorios):
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
@@ -177,7 +498,7 @@ class RegistroApp:
             return
         # Escribir en CSV
         archivo_nuevo = not os.path.exists(CSV_FILE)
-        # Si el archivo existe pero no tiene la columna 'motivo' o 'quien', rehacer encabezado y migrar filas
+        # Si el archivo existe pero no tiene la columna 'motivo' o 'cliente', rehacer encabezado y migrar filas
         if not archivo_nuevo:
             with open(CSV_FILE, 'r', encoding='utf-8') as f:
                 filas = list(csv.reader(f))
@@ -192,12 +513,13 @@ class RegistroApp:
                         fila_dict.get("variedad", ""),
                         fila_dict.get("colaborador", ""),
                         fila_dict.get("gramos", ""),
-                        fila_dict.get("plantas", "1"),
+                        fila_dict.get("plantas", "0"),
                         fila_dict.get("supervisor", ""),
                         fila_dict.get("sucursal", ""),
                         fila_dict.get("lote", ""),
                         fila_dict.get("motivo", ""),
-                        fila_dict.get("quien", ""),
+                        fila_dict.get("cliente", fila_dict.get("quien", "")),
+                        fila_dict.get("no_aplicacion", ""),
                         fila_dict.get("tipo", "Entrada")
                     ]
                     nuevas_filas.append(nueva)
@@ -213,7 +535,11 @@ class RegistroApp:
                 if archivo_nuevo:
                     writer.writerow(CAMPOS + ["tipo"])
                 writer.writerow(datos)
-            messagebox.showinfo("Éxito", "Registro guardado correctamente.")
+            # Sincronizar a GitHub Gist
+            if sincronizar_a_gist():
+                messagebox.showinfo("Éxito", "Registro guardado y sincronizado correctamente.")
+            else:
+                messagebox.showwarning("Advertencia", "Registro guardado localmente, pero no se pudo sincronizar con la nube.")
             self.limpiar_campos()
         except Exception as e:
             messagebox.showerror("Error al guardar", f"No se pudo guardar el registro en el archivo:\n{CSV_FILE}\n\nError: {e}\n\nVerifique permisos de escritura en la carpeta.")
@@ -228,7 +554,7 @@ class RegistroApp:
 
         # Fecha
         ttk.Label(frame, text="Fecha:").grid(row=0, column=0, sticky="e")
-        self.fecha = DateEntry(frame, date_pattern='yyyy-mm-dd', width=12)
+        self.fecha = DateEntry(frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
         self.fecha.set_date(datetime.now())
         self.fecha.grid(row=0, column=1, padx=5, pady=2)
         
@@ -247,10 +573,10 @@ class RegistroApp:
         # Motivo y Quién (visibilidad dinámica)
         self.label_motivo = ttk.Label(frame, text="Motivo:")
         self.motivo = ttk.Combobox(frame, state="readonly")
-        self.label_quien = ttk.Label(frame, text="¿A quién? (si venta):")
-        self.quien = ttk.Entry(frame)
+        self.label_cliente = ttk.Label(frame, text="Cliente (si venta):")
+        self.cliente = ttk.Entry(frame)
         self.motivo.set("")
-        self.quien.delete(0, "end")
+        self.cliente.delete(0, "end")
 
         # Colaborador y Supervisor (visibilidad dinámica)
         self.label_colaborador = ttk.Label(frame, text="Colaborador:")
@@ -261,11 +587,13 @@ class RegistroApp:
         GRAMOS = [str(i) for i in range(0, 201)]
         self.gramos = ttk.Combobox(frame, values=GRAMOS, state="normal")
         self.label_plantas = ttk.Label(frame, text="Plantas:")
-        self.plantas = ttk.Combobox(frame, values=[str(i) for i in range(1, 101)], state="normal")
+        self.plantas = ttk.Combobox(frame, values=[str(i) for i in range(0, 101)], state="normal")
+        self.label_no_aplicacion = ttk.Label(frame, text="No. Aplicación:")
+        self.no_aplicacion = ttk.Entry(frame)
         self.colaborador.set("")
         self.supervisor.set("")
         self.gramos.set("")
-        self.plantas.set("1")
+        self.plantas.set("0")
 
         # Sucursal (la posición se ajusta dinámicamente)
         self.sucursal_label = ttk.Label(frame, text="Sucursal:")
@@ -285,24 +613,34 @@ class RegistroApp:
         # Mostrar/ocultar campos según tipo y motivo
         def on_tipo_change(event=None):
             tipo = self.tipo_movimiento.get()
-            # Motivos según tipo
-            if tipo == "Salida":
-                motivos = ["venta", "pre-rolls", "mix"]
+            variedad = self.variedad.get()
+            # Motivos según tipo y variedad
+            if variedad == "MIX":
+                # Si es MIX, los motivos son las otras variedades
+                motivos = [v for v in VARIEDADES if v != "MIX"]
+            elif tipo == "Salida":
+                motivos = ["venta", "pre-rolls", "mix", "ajuste"]
             else:
-                motivos = ["inventario", "trim", "traslado", "flor"]
+                # Entrada tiene todas las opciones
+                motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
             self.motivo['values'] = motivos
             self.motivo.set("")
             # Motivo siempre en la fila 6
             self.label_motivo.grid(row=6, column=0, sticky="e")
             self.motivo.grid(row=6, column=1, padx=5, pady=2)
+            # Cambiar etiqueta de motivo si es MIX
+            if variedad == "MIX":
+                self.label_motivo.config(text="Variedad del Mix:")
+            else:
+                self.label_motivo.config(text="Motivo:")
             # Quién solo si salida y motivo=venta
             def on_motivo_change(event2=None):
                 if self.tipo_movimiento.get() == "Salida" and self.motivo.get() == "venta":
-                    self.label_quien.grid(row=7, column=0, sticky="e")
-                    self.quien.grid(row=7, column=1, padx=5, pady=2)
+                    self.label_cliente.grid(row=7, column=0, sticky="e")
+                    self.cliente.grid(row=7, column=1, padx=5, pady=2)
                 else:
-                    self.label_quien.grid_remove()
-                    self.quien.grid_remove()
+                    self.label_cliente.grid_remove()
+                    self.cliente.grid_remove()
             self.motivo.bind("<<ComboboxSelected>>", on_motivo_change)
             on_motivo_change()
             if tipo == "Salida":
@@ -312,9 +650,11 @@ class RegistroApp:
                 self.supervisor.grid(row=2, column=1, padx=5, pady=2)
                 self.label_gramos.grid(row=3, column=0, sticky="e")
                 self.gramos.grid(row=3, column=1, padx=5, pady=2)
-                # Ocultar campo plantas
+                # Ocultar campo plantas y no_aplicacion
                 self.label_plantas.grid_remove()
                 self.plantas.grid_remove()
+                self.label_no_aplicacion.grid_remove()
+                self.no_aplicacion.grid_remove()
                 # Sucursal y lote en filas 4 y 5
                 self.sucursal_label_row = 4
                 self.lote_label_row = 5
@@ -322,7 +662,7 @@ class RegistroApp:
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                # Botón guardar en la fila 8 (después de motivo y quien)
+                # Botón guardar en la fila 8 (después de motivo y cliente)
                 self.btn_guardar.grid(row=8, column=0, columnspan=2, pady=10)
             else:
                 self.label_colaborador.grid(row=2, column=0, sticky="e")
@@ -333,74 +673,476 @@ class RegistroApp:
                 self.gramos.grid(row=4, column=1, padx=5, pady=2)
                 self.label_plantas.grid(row=5, column=0, sticky="e")
                 self.plantas.grid(row=5, column=1, padx=5, pady=2)
-                # Sucursal y lote en filas 8 y 9
-                self.sucursal_label_row = 8
-                self.lote_label_row = 9
+                # Ocultar campo no_aplicacion (se edita en Filtrar registro)
+                self.label_no_aplicacion.grid_remove()
+                self.no_aplicacion.grid_remove()
+                # Sucursal y lote en filas 6 y 7
+                self.sucursal_label_row = 6
+                self.lote_label_row = 7
                 self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                self.btn_guardar.grid(row=self.lote_label_row+1, column=0, columnspan=2, pady=10)
+                # Motivo en fila 8 para Entrada
+                self.label_motivo.grid(row=8, column=0, sticky="e")
+                self.motivo.grid(row=8, column=1, padx=5, pady=2)
+                self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
         self.tipo_movimiento.bind("<<ComboboxSelected>>", on_tipo_change)
+        self.variedad.bind("<<ComboboxSelected>>", on_tipo_change)
         on_tipo_change()
 
         # Tab 2: Gráficos Generales
         graficos_frame = ttk.Frame(tab_control, padding=10)
         tab_control.add(graficos_frame, text="Gráficos Generales")
 
+        # Filtros de fecha
+        ttk.Label(graficos_frame, text="Fecha desde:").grid(row=0, column=0, sticky="e")
+        self.filtro_fecha_desde = DateEntry(graficos_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
+        self.filtro_fecha_desde.grid(row=0, column=1, padx=5, pady=2)
+        self.filtro_fecha_desde.delete(0, "end")  # Dejar vacío por defecto
+
+        ttk.Label(graficos_frame, text="Fecha hasta:").grid(row=0, column=2, sticky="e")
+        self.filtro_fecha_hasta = DateEntry(graficos_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
+        self.filtro_fecha_hasta.grid(row=0, column=3, padx=5, pady=2)
+        self.filtro_fecha_hasta.delete(0, "end")  # Dejar vacío por defecto
+
         # Filtros generales
-        ttk.Label(graficos_frame, text="Variedad:").grid(row=0, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Variedad:").grid(row=1, column=0, sticky="e")
         self.filtro_g_variedad = ttk.Combobox(graficos_frame, values=["Todas"] + VARIEDADES, state="readonly")
-        self.filtro_g_variedad.grid(row=0, column=1, padx=5, pady=2)
+        self.filtro_g_variedad.grid(row=1, column=1, padx=5, pady=2)
         self.filtro_g_variedad.set("")
 
-        ttk.Label(graficos_frame, text="Sucursal:").grid(row=1, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Sucursal:").grid(row=2, column=0, sticky="e")
         self.filtro_g_sucursal = ttk.Combobox(graficos_frame, values=["Todas"] + SUCURSALES, state="readonly")
-        self.filtro_g_sucursal.grid(row=1, column=1, padx=5, pady=2)
+        self.filtro_g_sucursal.grid(row=2, column=1, padx=5, pady=2)
         self.filtro_g_sucursal.set("")
         self.filtro_g_sucursal.bind("<<ComboboxSelected>>", self.actualizar_lotes_graficos)
 
-        ttk.Label(graficos_frame, text="Colaborador:").grid(row=2, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Colaborador:").grid(row=3, column=0, sticky="e")
         self.filtro_g_colaborador = ttk.Combobox(graficos_frame, values=["Todas"] + COLABORADORES, state="readonly")
-        self.filtro_g_colaborador.grid(row=2, column=1, padx=5, pady=2)
+        self.filtro_g_colaborador.grid(row=3, column=1, padx=5, pady=2)
         self.filtro_g_colaborador.set("")
 
-        ttk.Label(graficos_frame, text="Supervisor:").grid(row=3, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Supervisor:").grid(row=4, column=0, sticky="e")
         self.filtro_g_supervisor = ttk.Combobox(graficos_frame, values=["Todas"] + SUPERVISORES, state="readonly")
-        self.filtro_g_supervisor.grid(row=3, column=1, padx=5, pady=2)
+        self.filtro_g_supervisor.grid(row=4, column=1, padx=5, pady=2)
         self.filtro_g_supervisor.set("")
 
-        ttk.Label(graficos_frame, text="Lote:").grid(row=4, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Lote:").grid(row=5, column=0, sticky="e")
         self.filtro_g_lote = ttk.Combobox(graficos_frame, state="readonly")
-        self.filtro_g_lote.grid(row=4, column=1, padx=5, pady=2)
+        self.filtro_g_lote.grid(row=5, column=1, padx=5, pady=2)
         self.filtro_g_lote.set("")
         self.filtro_g_lote['values'] = ["Todas"]
 
         # Filtro Motivo
-        ttk.Label(graficos_frame, text="Motivo:").grid(row=5, column=0, sticky="e")
+        ttk.Label(graficos_frame, text="Motivo:").grid(row=6, column=0, sticky="e")
         self.filtro_g_motivo = ttk.Combobox(graficos_frame, values=["Todas", "inventario", "trim", "traslado", "flor", "venta", "pre-rolls", "mix"], state="readonly")
-        self.filtro_g_motivo.grid(row=5, column=1, padx=5, pady=2)
+        self.filtro_g_motivo.grid(row=6, column=1, padx=5, pady=2)
         self.filtro_g_motivo.set("")
 
-        # Filtro Quién (solo para ventas)
-        ttk.Label(graficos_frame, text="¿A quién? (si venta):").grid(row=6, column=0, sticky="e")
-        self.filtro_g_quien = ttk.Entry(graficos_frame)
-        self.filtro_g_quien.grid(row=6, column=1, padx=5, pady=2)
+        # Filtro Cliente (solo para ventas)
+        ttk.Label(graficos_frame, text="Cliente (si venta):").grid(row=7, column=0, sticky="e")
+        self.filtro_g_cliente = ttk.Entry(graficos_frame)
+        self.filtro_g_cliente.grid(row=7, column=1, padx=5, pady=2)
 
         # Campo a graficar
-        ttk.Label(graficos_frame, text="Campo a graficar:").grid(row=7, column=0, sticky="e")
-        self.campo_grafico = ttk.Combobox(graficos_frame, values=["variedad", "sucursal", "colaborador", "supervisor", "lote", "motivo", "quien"], state="readonly")
-        self.campo_grafico.grid(row=7, column=1, padx=5, pady=2)
+        ttk.Label(graficos_frame, text="Campo a graficar:").grid(row=8, column=0, sticky="e")
+        self.campo_grafico = ttk.Combobox(graficos_frame, values=["variedad", "sucursal", "colaborador", "supervisor", "lote", "motivo", "cliente"], state="readonly")
+        self.campo_grafico.grid(row=8, column=1, padx=5, pady=2)
         self.campo_grafico.set("variedad")
 
         # Switch para modo gráfico o lista
         self.modo_lista = tk.BooleanVar(value=False)
         self.switch_modo = ttk.Checkbutton(graficos_frame, text="Mostrar como lista descriptiva", variable=self.modo_lista)
-        self.switch_modo.grid(row=8, column=0, columnspan=2, pady=2)
+        self.switch_modo.grid(row=9, column=0, columnspan=2, pady=2)
 
         # Botón para mostrar gráfico general o lista (debe ir debajo del switch, en la siguiente fila)
         self.btn_grafico_general = ttk.Button(graficos_frame, text="Mostrar resultado", command=self.mostrar_grafico_general_unico)
-        self.btn_grafico_general.grid(row=9, column=0, columnspan=2, pady=10)
+        self.btn_grafico_general.grid(row=10, column=0, columnspan=2, pady=10)
+
+        # Tab 3: Arqueo por Lote
+        corte_frame = ttk.Frame(tab_control, padding=10)
+        tab_control.add(corte_frame, text="Arqueo por Lote")
+
+        ttk.Label(corte_frame, text="=== ARQUEO POR LOTE ===", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=4, pady=10)
+
+        # Selección de sucursal para filtrar lotes
+        ttk.Label(corte_frame, text="Sucursal:").grid(row=1, column=0, sticky="e")
+        self.corte_sucursal = ttk.Combobox(corte_frame, values=["TODOS"] + SUCURSALES, state="readonly")
+        self.corte_sucursal.grid(row=1, column=1, padx=5, pady=2)
+        self.corte_sucursal.set("")
+        self.corte_sucursal.bind("<<ComboboxSelected>>", self.actualizar_lotes_corte)
+
+        # Selección de lote
+        ttk.Label(corte_frame, text="Lote:").grid(row=2, column=0, sticky="e")
+        self.corte_lote = ttk.Combobox(corte_frame, state="readonly")
+        self.corte_lote.grid(row=2, column=1, padx=5, pady=2)
+        self.corte_lote.set("")
+
+        # Fecha inicial
+        ttk.Label(corte_frame, text="Fecha desde:").grid(row=3, column=0, sticky="e")
+        self.corte_fecha_desde = DateEntry(corte_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
+        self.corte_fecha_desde.grid(row=3, column=1, padx=5, pady=2)
+        self.corte_fecha_desde.delete(0, "end")
+
+        # Fecha final
+        ttk.Label(corte_frame, text="Fecha hasta:").grid(row=3, column=2, sticky="e")
+        self.corte_fecha_hasta = DateEntry(corte_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
+        self.corte_fecha_hasta.grid(row=3, column=3, padx=5, pady=2)
+
+        # Botones
+        btn_frame_corte = ttk.Frame(corte_frame)
+        btn_frame_corte.grid(row=4, column=0, columnspan=2, pady=10)
+        
+        ttk.Button(btn_frame_corte, text="Ver Resumen", command=self.ver_resumen_corte).pack(side="left", padx=5)
+        ttk.Button(btn_frame_corte, text="Exportar PDF", command=self.exportar_corte_pdf).pack(side="left", padx=5)
+        ttk.Button(btn_frame_corte, text="Exportar TXT", command=self.exportar_corte_txt).pack(side="left", padx=5)
+        ttk.Button(btn_frame_corte, text="Archivar y Cerrar Lote", command=self.archivar_corte).pack(side="left", padx=5)
+
+        # Área de texto para mostrar el resumen
+        self.corte_texto = tk.Text(corte_frame, wrap="word", font=("Courier", 10), height=25, width=80)
+        self.corte_texto.grid(row=5, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+        corte_frame.grid_rowconfigure(5, weight=1)
+        corte_frame.grid_columnconfigure(3, weight=1)
+
+        # Scrollbar para el texto
+        corte_scroll = ttk.Scrollbar(corte_frame, orient="vertical", command=self.corte_texto.yview)
+        corte_scroll.grid(row=5, column=4, sticky="ns")
+        self.corte_texto.configure(yscrollcommand=corte_scroll.set)
+
+    def actualizar_lotes_corte(self, event=None):
+        """Actualiza los lotes disponibles según la sucursal seleccionada"""
+        sucursal = self.corte_sucursal.get()
+        if sucursal == "TODOS":
+            # Mostrar todos los lotes de todas las sucursales
+            todos_lotes = ["TODOS"]
+            for lotes in self.lotes_por_sucursal.values():
+                todos_lotes.extend(lotes)
+            # Eliminar duplicados manteniendo orden
+            lotes_unicos = list(dict.fromkeys(todos_lotes))
+            self.corte_lote['values'] = lotes_unicos
+        elif sucursal in self.lotes_por_sucursal:
+            self.corte_lote['values'] = ["TODOS"] + self.lotes_por_sucursal[sucursal]
+        else:
+            self.corte_lote['values'] = []
+        self.corte_lote.set("")
+
+    def generar_resumen_corte(self):
+        """Genera el resumen del corte mensual para el lote seleccionado"""
+        lote = self.corte_lote.get()
+        fecha_desde = self.corte_fecha_desde.get().strip()
+        fecha_hasta = self.corte_fecha_hasta.get().strip()
+        sucursal = self.corte_sucursal.get()
+        
+        if not lote or not sucursal:
+            messagebox.showerror("Error", "Debe seleccionar sucursal y lote.")
+            return None
+        
+        if not os.path.exists(CSV_FILE):
+            messagebox.showerror("Error", "No hay datos registrados.")
+            return None
+        
+        df = pd.read_csv(CSV_FILE)
+        
+        # Filtrar por sucursal y lote
+        df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+        
+        # Aplicar filtro de sucursal
+        if sucursal != "TODOS":
+            df_filtrado = df[df["sucursal"] == sucursal].copy()
+        else:
+            df_filtrado = df.copy()
+        
+        # Aplicar filtro de lote
+        if lote != "TODOS":
+            df_lote = df_filtrado[df_filtrado["lote"] == lote].copy()
+        else:
+            df_lote = df_filtrado.copy()
+        
+        # Aplicar filtro de fechas si están definidas
+        if fecha_desde:
+            df_lote = df_lote[df_lote["fecha"] >= pd.to_datetime(fecha_desde)]
+        if fecha_hasta:
+            df_lote = df_lote[df_lote["fecha"] <= pd.to_datetime(fecha_hasta)]
+        
+        if df_lote.empty:
+            rango = ""
+            if fecha_desde and fecha_hasta:
+                rango = f" entre {fecha_desde} y {fecha_hasta}"
+            elif fecha_desde:
+                rango = f" desde {fecha_desde}"
+            elif fecha_hasta:
+                rango = f" hasta {fecha_hasta}"
+            return f"No hay registros para el lote {lote}{rango}"
+        
+        # Convertir gramos a numérico
+        df_lote["gramos"] = pd.to_numeric(df_lote["gramos"], errors="coerce").fillna(0)
+        df_lote["plantas"] = pd.to_numeric(df_lote["plantas"], errors="coerce").fillna(0)
+        
+        # Separar entradas y salidas
+        df_entradas = df_lote[df_lote["tipo"] == "Entrada"]
+        df_salidas = df_lote[df_lote["tipo"] == "Salida"]
+        
+        # Calcular totales
+        total_gramos_entrada = df_entradas["gramos"].sum()
+        total_plantas_entrada = df_entradas["plantas"].sum()
+        total_gramos_salida = abs(df_salidas["gramos"].sum())  # Salidas son negativas
+        
+        # Balance
+        balance_gramos = total_gramos_entrada - total_gramos_salida
+        
+        # Desglose por variedad
+        entradas_por_variedad = df_entradas.groupby("variedad").agg({
+            "gramos": "sum",
+            "plantas": "sum"
+        }).sort_values("gramos", ascending=False)
+        
+        salidas_por_variedad = df_salidas.groupby("variedad")["gramos"].sum().abs().sort_values(ascending=False)
+        
+        # Desglose de salidas por motivo
+        salidas_por_motivo = df_salidas.groupby("motivo")["gramos"].sum().abs().sort_values(ascending=False)
+        
+        # Ventas por cliente
+        df_ventas = df_salidas[df_salidas["motivo"] == "venta"]
+        ventas_por_cliente = df_ventas.groupby("cliente")["gramos"].sum().abs().sort_values(ascending=False)
+        
+        # Desglose por colaborador
+        entradas_por_colaborador = df_entradas.groupby("colaborador").agg({
+            "gramos": "sum",
+            "plantas": "sum"
+        }).sort_values("gramos", ascending=False)
+        
+        # Generar reporte
+        lineas = []
+        lineas.append("=" * 60)
+        titulo_lote = "TODOS LOS LOTES" if lote == "TODOS" else lote
+        titulo_sucursal = "TODAS LAS SUCURSALES" if sucursal == "TODOS" else sucursal
+        lineas.append(f"       ARQUEO - {titulo_lote}")
+        lineas.append(f"       Sucursal: {titulo_sucursal}")
+        if fecha_desde and fecha_hasta:
+            lineas.append(f"       Período: {fecha_desde} al {fecha_hasta}")
+        elif fecha_desde:
+            lineas.append(f"       Desde: {fecha_desde}")
+        elif fecha_hasta:
+            lineas.append(f"       Hasta: {fecha_hasta}")
+        else:
+            lineas.append(f"       Período: Todo el historial")
+        lineas.append(f"       Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        lineas.append("=" * 60)
+        lineas.append("")
+        
+        lineas.append(">>> RESUMEN GENERAL <<<")
+        lineas.append("-" * 40)
+        lineas.append(f"Total Entradas:     {total_gramos_entrada:,.2f} gramos")
+        lineas.append(f"Total Plantas:      {int(total_plantas_entrada)} plantas")
+        lineas.append(f"Total Salidas:      {total_gramos_salida:,.2f} gramos")
+        lineas.append(f"BALANCE FINAL:      {balance_gramos:,.2f} gramos")
+        lineas.append("")
+        
+        lineas.append(">>> ENTRADAS POR VARIEDAD <<<")
+        lineas.append("-" * 40)
+        for var, row in entradas_por_variedad.iterrows():
+            lineas.append(f"  {var:20} {row['gramos']:>10,.2f}g  ({int(row['plantas'])} plantas)")
+        lineas.append("")
+        
+        lineas.append(">>> SALIDAS POR VARIEDAD <<<")
+        lineas.append("-" * 40)
+        for var, gramos in salidas_por_variedad.items():
+            lineas.append(f"  {var:20} {gramos:>10,.2f}g")
+        lineas.append("")
+        
+        lineas.append(">>> SALIDAS POR MOTIVO <<<")
+        lineas.append("-" * 40)
+        for motivo, gramos in salidas_por_motivo.items():
+            lineas.append(f"  {motivo:20} {gramos:>10,.2f}g")
+        lineas.append("")
+        
+        if not ventas_por_cliente.empty:
+            lineas.append(">>> VENTAS POR CLIENTE <<<")
+            lineas.append("-" * 40)
+            for cliente, gramos in ventas_por_cliente.items():
+                if cliente and str(cliente).strip():
+                    lineas.append(f"  {str(cliente):20} {gramos:>10,.2f}g")
+            lineas.append("")
+        
+        lineas.append(">>> PRODUCCIÓN POR COLABORADOR <<<")
+        lineas.append("-" * 40)
+        for colab, row in entradas_por_colaborador.iterrows():
+            if colab and str(colab).strip():
+                lineas.append(f"  {str(colab):20} {row['gramos']:>10,.2f}g  ({int(row['plantas'])} plantas)")
+        lineas.append("")
+        
+        lineas.append("=" * 60)
+        lineas.append(f"Total de registros en el período: {len(df_lote)}")
+        lineas.append("=" * 60)
+        
+        return "\n".join(lineas)
+
+    def ver_resumen_corte(self):
+        """Muestra el resumen del corte en el área de texto"""
+        resumen = self.generar_resumen_corte()
+        if resumen:
+            self.corte_texto.config(state="normal")
+            self.corte_texto.delete("1.0", "end")
+            self.corte_texto.insert("end", resumen)
+            self.corte_texto.config(state="disabled")
+
+    def exportar_corte_txt(self):
+        """Exporta el corte a archivo TXT"""
+        resumen = self.generar_resumen_corte()
+        if not resumen:
+            return
+        
+        # Crear carpeta registros si no existe
+        carpeta_registros = os.path.join(BASE_PATH, "registros")
+        if not os.path.exists(carpeta_registros):
+            os.makedirs(carpeta_registros)
+        
+        from tkinter import filedialog
+        lote = self.corte_lote.get().replace(" ", "_")
+        fecha_desde = self.corte_fecha_desde.get()
+        fecha_hasta = self.corte_fecha_hasta.get()
+        archivo = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Archivo de texto", "*.txt")],
+            title="Guardar corte como TXT",
+            initialdir=carpeta_registros,
+            initialfilename=f"corte_{lote}_{fecha_desde}_a_{fecha_hasta}.txt"
+        )
+        if archivo:
+            with open(archivo, "w", encoding="utf-8") as f:
+                f.write(resumen)
+            messagebox.showinfo("Éxito", f"Corte exportado a {archivo}")
+
+    def exportar_corte_pdf(self):
+        """Exporta el corte a archivo PDF"""
+        resumen = self.generar_resumen_corte()
+        if not resumen:
+            return
+        
+        try:
+            from fpdf import FPDF
+        except ImportError:
+            messagebox.showerror("Error", "Debe instalar fpdf: pip install fpdf")
+            return
+        
+        # Crear carpeta registros si no existe
+        carpeta_registros = os.path.join(BASE_PATH, "registros")
+        if not os.path.exists(carpeta_registros):
+            os.makedirs(carpeta_registros)
+        
+        from tkinter import filedialog
+        lote = self.corte_lote.get().replace(" ", "_")
+        fecha_desde = self.corte_fecha_desde.get()
+        fecha_hasta = self.corte_fecha_hasta.get()
+        archivo = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("Archivo PDF", "*.pdf")],
+            title="Guardar corte como PDF",
+            initialdir=carpeta_registros,
+            initialfilename=f"corte_{lote}_{fecha_desde}_a_{fecha_hasta}.pdf"
+        )
+        if archivo:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.set_font("Courier", size=9)
+            for linea in resumen.splitlines():
+                pdf.multi_cell(0, 5, linea)
+            pdf.output(archivo)
+            messagebox.showinfo("Éxito", f"Corte exportado a {archivo}")
+
+    def archivar_corte(self):
+        """Exporta los registros del corte a un archivo histórico (sin eliminar del principal)"""
+        lote = self.corte_lote.get()
+        fecha_desde = self.corte_fecha_desde.get().strip()
+        fecha_hasta = self.corte_fecha_hasta.get().strip()
+        sucursal = self.corte_sucursal.get()
+        
+        if not lote or not sucursal:
+            messagebox.showerror("Error", "Debe seleccionar sucursal y lote.")
+            return
+        
+        if not os.path.exists(CSV_FILE):
+            messagebox.showerror("Error", "No hay datos registrados.")
+            return
+        
+        df = pd.read_csv(CSV_FILE)
+        df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+        
+        # Filtrar registros a exportar
+        df_exportar = df[df["lote"] == lote].copy()
+        
+        if fecha_desde:
+            df_exportar = df_exportar[df_exportar["fecha"] >= pd.to_datetime(fecha_desde)]
+        if fecha_hasta:
+            df_exportar = df_exportar[df_exportar["fecha"] <= pd.to_datetime(fecha_hasta)]
+        
+        if df_exportar.empty:
+            messagebox.showinfo("Info", f"No hay registros para exportar en {lote}")
+            return
+        
+        # Nombre del archivo con rango de fechas
+        if fecha_desde and fecha_hasta:
+            fecha_archivo = f"{fecha_desde}_a_{fecha_hasta}"
+        elif fecha_desde:
+            fecha_archivo = f"desde_{fecha_desde}"
+        elif fecha_hasta:
+            fecha_archivo = f"hasta_{fecha_hasta}"
+        else:
+            fecha_archivo = datetime.now().strftime('%Y-%m-%d')
+        
+        # Confirmar acción
+        respuesta = messagebox.askyesno(
+            "Confirmar Exportación",
+            f"¿Exportar corte del lote {lote}?\n\n"
+            f"Se crearán archivos históricos con {len(df_exportar)} registros.\n"
+            f"Los datos se MANTIENEN en el registro principal."
+        )
+        
+        if not respuesta:
+            return
+        
+        # Crear carpeta registros si no existe
+        carpeta_registros = os.path.join(BASE_PATH, "registros")
+        if not os.path.exists(carpeta_registros):
+            os.makedirs(carpeta_registros)
+        
+        # Guardar archivo histórico
+        archivo_historico = os.path.join(carpeta_registros, f"historico_{lote.replace(' ', '_')}_{fecha_archivo}.csv")
+        
+        # Convertir fecha a string para guardar
+        df_exportar["fecha"] = df_exportar["fecha"].dt.strftime('%Y-%m-%d')
+        
+        # Guardar histórico
+        df_exportar.to_csv(archivo_historico, index=False)
+        
+        # Generar y guardar resumen
+        resumen = self.generar_resumen_corte()
+        archivo_resumen = ""
+        if resumen:
+            archivo_resumen = os.path.join(carpeta_registros, f"resumen_{lote.replace(' ', '_')}_{fecha_archivo}.txt")
+            with open(archivo_resumen, "w", encoding="utf-8") as f:
+                f.write(resumen)
+        
+        messagebox.showinfo(
+            "Éxito",
+            f"Corte del lote {lote} exportado correctamente.\n\n"
+            f"Registros exportados: {len(df_exportar)}\n"
+            f"Archivo histórico: {archivo_historico}\n"
+            f"Resumen guardado: {archivo_resumen}\n\n"
+            f"Los datos siguen en el registro principal."
+        )
+        
+        # Actualizar el área de texto
+        self.corte_texto.config(state="normal")
+        self.corte_texto.delete("1.0", "end")
+        self.corte_texto.insert("end", f"Corte del lote {lote} exportado exitosamente.\n\n")
+        self.corte_texto.insert("end", f"Archivos generados:\n")
+        self.corte_texto.insert("end", f"  - {archivo_historico}\n")
+        self.corte_texto.insert("end", f"  - {archivo_resumen}\n")
+        self.corte_texto.config(state="disabled")
+
     def actualizar_lotes_graficos(self, event=None):
         # Leer los lotes disponibles según los filtros actuales en la pestaña de gráficos
         sucursal = self.filtro_g_sucursal.get().strip()
@@ -443,15 +1185,31 @@ class RegistroApp:
         df = pd.read_csv(CSV_FILE)
         for col in ["variedad", "colaborador", "supervisor", "sucursal", "lote"]:
             df[col] = df[col].astype(str).str.strip()
-        # Si existe la columna tipo, ajustar gramos según Entrada/Salida
+        # Si existe la columna tipo, solo convertir gramos a numérico
         if "tipo" in df.columns:
             df["tipo"] = df["tipo"].fillna("").astype(str)
             df["gramos"] = pd.to_numeric(df["gramos"], errors="coerce")
             df = df.dropna(subset=["gramos"])
-            df.loc[df["tipo"].str.lower() == "salida", "gramos"] *= -1
         else:
             df["gramos"] = pd.to_numeric(df["gramos"], errors="coerce")
             df = df.dropna(subset=["gramos"])
+        
+        # Filtrar por fecha
+        fecha_desde = self.filtro_fecha_desde.get().strip()
+        fecha_hasta = self.filtro_fecha_hasta.get().strip()
+        if fecha_desde or fecha_hasta:
+            df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+            if fecha_desde:
+                try:
+                    df = df[df["fecha"] >= pd.to_datetime(fecha_desde)]
+                except:
+                    pass
+            if fecha_hasta:
+                try:
+                    df = df[df["fecha"] <= pd.to_datetime(fecha_hasta)]
+                except:
+                    pass
+        
         # Aplicar filtros
         filtros = {
             "variedad": self.filtro_g_variedad.get().strip(),
@@ -460,13 +1218,13 @@ class RegistroApp:
             "supervisor": self.filtro_g_supervisor.get().strip(),
             "lote": self.filtro_g_lote.get().strip(),
             "motivo": self.filtro_g_motivo.get().strip(),
-            "quien": self.filtro_g_quien.get().strip()
+            "cliente": self.filtro_g_cliente.get().strip()
         }
         for k, v in filtros.items():
             if v and v != "Todas":
                 if k == "lote":
                     df = df[df[k] == v]
-                elif k == "quien":
+                elif k == "cliente":
                     df = df[df[k].str.contains(v, case=False, na=False)]
                 else:
                     df = df[df[k].str.upper() == v.upper()]
@@ -537,13 +1295,13 @@ class RegistroApp:
                     return ', '.join(resultado)
                 lotes_por_grupo = df.groupby(campo).apply(lotes_con_plantas_grupo).reindex(resumen.index, fill_value='')
                 for i, grupo in enumerate(resumen.index):
-                    # Mostrar motivo y quien si corresponde
+                    # Mostrar motivo y cliente si corresponde
                     if campo == "motivo":
                         subdf = df[df[campo] == grupo]
-                        quienes = subdf["quien"].dropna().unique()
-                        quienes_str = f"\n  Quién(es): {', '.join([str(q) for q in quienes if str(q).strip()])}" if len(quienes) > 0 else ""
-                        lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}{quienes_str}")
-                    elif campo == "quien":
+                        clientes = subdf["cliente"].dropna().unique()
+                        clientes_str = f"\n  Cliente(s): {', '.join([str(c) for c in clientes if str(c).strip()])}" if len(clientes) > 0 else ""
+                        lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}{clientes_str}")
+                    elif campo == "cliente":
                         lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
                     else:
                         lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
@@ -697,13 +1455,14 @@ class RegistroApp:
     def limpiar_campos(self):
         self.colaborador.set("")
         self.gramos.set("")
-        self.plantas.set("")
+        self.plantas.set("0")
         self.supervisor.set("")
         self.lote.set("")
         self.variedad.set("")
         self.sucursal.set("")
         self.motivo.set("")
-        self.quien.delete(0, "end")
+        self.cliente.delete(0, "end")
+        self.no_aplicacion.delete(0, "end")
         # Solo actualiza la fecha si es necesario, y de forma segura
         try:
             self.fecha.set_date(datetime.now().date())
