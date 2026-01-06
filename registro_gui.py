@@ -126,12 +126,44 @@ def sincronizar_desde_gist():
     return False
 
 def sincronizar_a_gist():
-    """Sube el CSV local al Repo"""
-    if os.path.exists(CSV_FILE):
-        with open(CSV_FILE, "r", encoding="utf-8") as f:
-            contenido = f.read()
-        return escribir_repo(contenido)
-    return False
+    """Sube el CSV local al Repo con merge automático para evitar conflictos"""
+    if not os.path.exists(CSV_FILE):
+        return False
+    
+    # Leer datos locales
+    with open(CSV_FILE, "r", encoding="utf-8") as f:
+        contenido_local = f.read()
+    
+    # Obtener versión más reciente del repo
+    contenido_remoto = leer_repo()
+    
+    if contenido_remoto:
+        # Hacer merge: combinar registros únicos
+        lineas_locales = contenido_local.strip().split("\n")
+        lineas_remotas = contenido_remoto.strip().split("\n")
+        
+        # Primera línea es el encabezado
+        encabezado = lineas_locales[0] if lineas_locales else lineas_remotas[0]
+        
+        # Combinar registros únicos (sin duplicados)
+        registros = set()
+        for linea in lineas_locales[1:] + lineas_remotas[1:]:
+            if linea.strip():
+                registros.add(linea)
+        
+        # Reconstruir CSV ordenado por fecha (primera columna)
+        registros_ordenados = sorted(registros, key=lambda x: x.split(",")[0] if x else "")
+        
+        contenido_merged = encabezado + "\n" + "\n".join(registros_ordenados)
+        
+        # Guardar localmente el merge
+        with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+            f.write(contenido_merged)
+        
+        return escribir_repo(contenido_merged)
+    else:
+        # Si no hay versión remota, subir la local
+        return escribir_repo(contenido_local)
 
 # Listas de opciones
 VARIEDADES = [
@@ -478,7 +510,7 @@ class RegistroApp:
             defaultextension=".csv",
             filetypes=[("Archivo CSV", "*.csv")],
             title="Exportar registro CSV",
-            initialfilename=nombre_archivo
+            initialfile=nombre_archivo
         )
         
         if archivo:
