@@ -1,9 +1,9 @@
 # Archivos de configuración con credenciales
 gist_config.txt
+github_config.txt
 
 # Archivos locales de datos
 registro_local.csv
-registro.csv
 
 # Carpeta de arqueos exportados
 registros/

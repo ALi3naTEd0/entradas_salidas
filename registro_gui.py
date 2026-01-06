@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 import requests
-import io
+import base64
 
 # Soporte para ejecutable PyInstaller: buscar archivo en la misma carpeta que el .exe o script
 if getattr(sys, 'frozen', False):
@@ -16,18 +16,18 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Archivo de configuración para credenciales de GitHub Gist
-CONFIG_FILE = os.path.join(BASE_PATH, "gist_config.txt")
+# Archivo de configuración para credenciales de GitHub
+CONFIG_FILE = os.path.join(BASE_PATH, "github_config.txt")
 
 def cargar_config():
-    """Carga la configuración del Gist desde archivo gist_config.txt"""
+    """Carga la configuración del repo desde archivo github_config.txt"""
     if not os.path.exists(CONFIG_FILE):
         # Crear archivo de ejemplo
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            f.write("TU_GIST_ID_AQUI\nTU_TOKEN_AQUI\n")
+            f.write("usuario/nombre-repo\nTU_TOKEN_AQUI\n")
         print(f"ERROR: Configura tus credenciales en: {CONFIG_FILE}")
-        print("Línea 1: GIST_ID")
-        print("Línea 2: TOKEN de GitHub")
+        print("Línea 1: usuario/repo (ej: ALi3naTEd0/entradas_salidas)")
+        print("Línea 2: TOKEN de GitHub con permiso 'repo'")
         sys.exit(1)
     
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -35,65 +35,90 @@ def cargar_config():
     
     if len(lineas) < 2:
         print(f"ERROR: El archivo {CONFIG_FILE} debe tener 2 líneas:")
-        print("Línea 1: GIST_ID")
+        print("Línea 1: usuario/repo")
         print("Línea 2: TOKEN de GitHub")
         sys.exit(1)
     
-    gist_id = lineas[0].strip()
+    repo = lineas[0].strip()
     token = lineas[1].strip()
     
-    if gist_id == "TU_GIST_ID_AQUI" or token == "TU_TOKEN_AQUI":
+    if "TU_TOKEN_AQUI" in token or "/" not in repo:
         print(f"ERROR: Edita el archivo {CONFIG_FILE} con tus credenciales reales")
         sys.exit(1)
     
-    return gist_id, token
+    return repo, token
 
 # Cargar configuración
-GIST_ID, GIST_TOKEN = cargar_config()
-GIST_FILENAME = "registro.csv"
+GITHUB_REPO, GITHUB_TOKEN = cargar_config()
+REPO_FILENAME = "registro.csv"
 
 # Archivo local para caché/backup
 CSV_FILE = os.path.join(BASE_PATH, "registro_local.csv")
 
-def leer_gist():
-    """Lee el contenido del CSV desde GitHub Gist"""
-    try:
-        url = f"https://api.github.com/gists/{GIST_ID}"
-        headers = {"Authorization": f"token {GIST_TOKEN}"}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        gist_data = response.json()
-        contenido = gist_data["files"][GIST_FILENAME]["content"]
-        return contenido
-    except Exception as e:
-        print(f"Error leyendo Gist: {e}")
-        return None
+# Variable global para almacenar el SHA del archivo
+archivo_sha = None
 
-def escribir_gist(contenido):
-    """Escribe el contenido del CSV a GitHub Gist"""
+def leer_repo():
+    """Lee el contenido del CSV desde GitHub Repo"""
+    global archivo_sha
     try:
-        url = f"https://api.github.com/gists/{GIST_ID}"
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{REPO_FILENAME}"
         headers = {
-            "Authorization": f"token {GIST_TOKEN}",
+            "Authorization": f"token {GITHUB_TOKEN}",
             "Accept": "application/vnd.github.v3+json"
         }
-        data = {
-            "files": {
-                GIST_FILENAME: {
-                    "content": contenido
-                }
-            }
-        }
-        response = requests.patch(url, headers=headers, json=data, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
+        data = response.json()
+        archivo_sha = data["sha"]  # Guardar SHA para actualizaciones
+        contenido = base64.b64decode(data["content"]).decode("utf-8")
+        return contenido
+    except Exception as e:
+        print(f"Error leyendo repo: {e}")
+        return None
+
+def escribir_repo(contenido):
+    """Escribe el contenido del CSV al GitHub Repo"""
+    global archivo_sha
+    try:
+        # Primero obtener el SHA actual si no lo tenemos
+        if archivo_sha is None:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{REPO_FILENAME}"
+            headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                archivo_sha = response.json()["sha"]
+        
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{REPO_FILENAME}"
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        # Codificar contenido en base64
+        contenido_b64 = base64.b64encode(contenido.encode("utf-8")).decode("utf-8")
+        
+        data = {
+            "message": f"Actualización registro {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            "content": contenido_b64,
+        }
+        
+        if archivo_sha:
+            data["sha"] = archivo_sha
+        
+        response = requests.put(url, headers=headers, json=data, timeout=10)
+        response.raise_for_status()
+        
+        # Actualizar SHA con el nuevo
+        archivo_sha = response.json()["content"]["sha"]
         return True
     except Exception as e:
-        print(f"Error escribiendo Gist: {e}")
+        print(f"Error escribiendo repo: {e}")
         return False
 
 def sincronizar_desde_gist():
-    """Descarga el CSV del Gist y lo guarda localmente"""
-    contenido = leer_gist()
+    """Descarga el CSV del Repo y lo guarda localmente"""
+    contenido = leer_repo()
     if contenido:
         with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
             f.write(contenido)
@@ -101,11 +126,11 @@ def sincronizar_desde_gist():
     return False
 
 def sincronizar_a_gist():
-    """Sube el CSV local al Gist"""
+    """Sube el CSV local al Repo"""
     if os.path.exists(CSV_FILE):
         with open(CSV_FILE, "r", encoding="utf-8") as f:
             contenido = f.read()
-        return escribir_gist(contenido)
+        return escribir_repo(contenido)
     return False
 
 # Listas de opciones
@@ -383,10 +408,10 @@ class RegistroApp:
             pass  # Si hay error, continuar sin icono
         
         # Sincronizar desde Gist al iniciar
-        self.root.config(cursor="wait")
+        self.root.config(cursor="watch")
         self.root.update()
         if sincronizar_desde_gist():
-            print("Datos sincronizados desde GitHub Gist")
+            print("Datos sincronizados desde GitHub Repo")
             self.gist_conectado = True
         else:
             print("No se pudo sincronizar, usando datos locales")
@@ -404,6 +429,8 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
+        VERSION = "v1.0.0"
+        
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
         
@@ -418,25 +445,56 @@ class RegistroApp:
         self.lbl_status = tk.Label(status_frame, text=texto, fg=color, font=("Arial", 9, "bold"))
         self.lbl_status.pack(side="left", padx=(0, 10))
         
-        # Link al Gist
-        gist_url = f"https://gist.github.com/{GIST_ID}"
-        lbl_link = tk.Label(status_frame, text=gist_url, fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
+        # Link al Repo
+        repo_url = f"https://github.com/{GITHUB_REPO}/blob/main/{REPO_FILENAME}"
+        lbl_link = tk.Label(status_frame, text=f"GitHub: {GITHUB_REPO}", fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
         lbl_link.pack(side="left")
-        lbl_link.bind("<Button-1>", lambda e: webbrowser.open(gist_url))
+        lbl_link.bind("<Button-1>", lambda e: webbrowser.open(repo_url))
+        
+        # Versión
+        lbl_version = tk.Label(status_frame, text=VERSION, fg="#7f8c8d", font=("Arial", 9))
+        lbl_version.pack(side="right", padx=(10, 5))
         
         # Botón para refrescar conexión
         btn_refresh = ttk.Button(status_frame, text="↻ Sincronizar", width=12, command=self.refrescar_conexion)
         btn_refresh.pack(side="right", padx=5)
+        
+        # Botón para exportar CSV
+        btn_exportar = ttk.Button(status_frame, text="📥 Exportar CSV", width=14, command=self.exportar_csv_local)
+        btn_exportar.pack(side="right", padx=5)
+    
+    def exportar_csv_local(self):
+        """Exporta el registro.csv a una ubicación elegida por el usuario"""
+        from tkinter import filedialog
+        
+        if not os.path.exists(CSV_FILE):
+            messagebox.showerror("Error", "No hay datos para exportar.")
+            return
+        
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        nombre_archivo = f"registro_{fecha_actual}.csv"
+        
+        archivo = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("Archivo CSV", "*.csv")],
+            title="Exportar registro CSV",
+            initialfilename=nombre_archivo
+        )
+        
+        if archivo:
+            import shutil
+            shutil.copy(CSV_FILE, archivo)
+            messagebox.showinfo("Éxito", f"Registro exportado a:\n{archivo}")
     
     def refrescar_conexion(self):
-        """Refresca la conexión con el Gist"""
-        self.root.config(cursor="wait")
+        """Refresca la conexión con el Repo"""
+        self.root.config(cursor="watch")
         self.root.update()
         
         if sincronizar_desde_gist():
             self.gist_conectado = True
             self.lbl_status.config(text="● Conectado", fg="#2ecc71")
-            messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Gist")
+            messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Repo")
         else:
             self.gist_conectado = False
             self.lbl_status.config(text="● Sin conexión", fg="#e74c3c")
