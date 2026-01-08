@@ -200,6 +200,7 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,client
 2026-01-02,BANANA LATTE,,-10.0,0,DRE,SMB,L1 - SMB,venta,DRE,,Salida
 2026-01-02,RED RED WINE,,-453.0,0,DRE,FSM,L1 - FSM,venta,DRE,,Salida
 2026-01-02,BANANA LATTE,,-49.0,0,DRE,SMB,L1 - SMB,venta,CHCH,,Salida
+2026-01-02,BANANA LATTE,,-4.0,0,DRE,SMB,L1 - SMB,venta,CHAYA,,Salida2026-01-08,AK-47,NRQ,29.0,1,DRE,FSM,L1 - FSM,trim,,,Entrada
 2026-01-02,RED RED WINE,AX,20.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
 2026-01-02,WEDDING CAKE,,-15.0,0,DRE,FSM,L1 - FSM,venta,LALO,,Salida
 2026-01-02,BANANA LATTE,,-4.0,0,DRE,SMB,L1 - SMB,venta,CHAYA,,Salida2026-01-02,KANDY KUSH,JP,15.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
