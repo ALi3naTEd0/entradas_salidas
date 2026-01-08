@@ -193,11 +193,11 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,client
 2025-12-29,MOZZARELLA,AX,21,1,DRE,FSM,L2 - FSM,trim,,,Entrada
 2025-12-29,WEDDING CAKE,CHCH,29.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
 2025-12-30,WEDDING CAKE,,-20.0,0,DRE,SMB,L1 - SMB,venta,LALO,,Salida
-2026-01-02,BANANA LATTE,JP,18.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
+2026-01-02,BANANA LATTE,JR,18.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
 2026-01-02,BANANA LATTE,,-10.0,0,DRE,SMB,L1 - SMB,venta,DRE,,Salida
 2026-01-02,RED RED WINE,,-453.0,0,DRE,FSM,L1 - FSM,venta,DRE,,Salida
 2026-01-02,BANANA LATTE,,-49.0,0,DRE,SMB,L1 - SMB,venta,CHCH,,Salida
 2026-01-02,WEDDING CAKE,,-15.0,0,DRE,FSM,L1 - FSM,venta,LALO,,Salida
 2026-01-02,BANANA LATTE,,-4.0,0,DRE,SMB,L1 - SMB,venta,CHAYA,,Salida
 2026-01-05,AK-47,,43.0,0,DRE,SMB,L2 - SMB,ajuste,,,Entrada
-2026-01-08,BANANA LATTE,JR,18.0,1,DRE,FSM,L2 - FSM,trim,,,Entrada
+
