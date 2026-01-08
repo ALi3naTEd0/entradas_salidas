@@ -23,10 +23,10 @@ jobs:
 
       - name: Build EXE with PyInstaller
         run: |
-          pyinstaller --onefile registro_flet.py
+          pyinstaller --onefile registro_gui.py
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: registro_flet-exe
-          path: dist/registro_flet.exe
+          name: registro_gui-exe
+          path: dist/registro_gui.exe
