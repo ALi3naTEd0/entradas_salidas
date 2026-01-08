@@ -154,7 +154,7 @@ def sincronizar_a_gist():
         # Reconstruir CSV ordenado por fecha (primera columna)
         registros_ordenados = sorted(registros, key=lambda x: x.split(",")[0] if x else "")
         
-        contenido_merged = encabezado + "\n" + "\n".join(registros_ordenados)
+        contenido_merged = encabezado + "\n" + "\n".join(registros_ordenados) + "\n"
         
         # Guardar localmente el merge
         with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
