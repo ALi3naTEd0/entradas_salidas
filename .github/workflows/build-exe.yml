@@ -23,7 +23,7 @@ jobs:
 
       - name: Build EXE with PyInstaller
         run: |
-          pyinstaller --onefile registro_gui.py
+          pyinstaller --onefile --windowed registro_gui.py
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
