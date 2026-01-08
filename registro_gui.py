@@ -129,47 +129,46 @@ def sincronizar_a_gist():
     """Sube el CSV local al Repo con merge automático para evitar conflictos"""
     if not os.path.exists(CSV_FILE):
         return False
-    
-    # Leer datos locales
+
+    # Leer datos locales, asegurando saltos de línea correctos
     with open(CSV_FILE, "r", encoding="utf-8") as f:
-        contenido_local = f.read()
-    
+        lineas_locales = [linea.rstrip('\r\n') for linea in f if linea.strip()]
+
     # Obtener versión más reciente del repo
     contenido_remoto = leer_repo()
-    
+
     if contenido_remoto:
         # Hacer merge: preservar orden del remoto y agregar nuevos registros locales al final
-        lineas_locales = contenido_local.strip().split("\n")
-        lineas_remotas = contenido_remoto.strip().split("\n")
-        
+        lineas_remotas = [linea.rstrip('\r\n') for linea in contenido_remoto.strip().split("\n") if linea.strip()]
+
         # Primera línea es el encabezado
         encabezado = lineas_locales[0] if lineas_locales else lineas_remotas[0]
-        
+
         # Mantener todos los registros remotos en su orden original (preserva duplicados válidos)
-        registros_remotos = [linea for linea in lineas_remotas[1:] if linea.strip()]
-        
+        registros_remotos = lineas_remotas[1:] if len(lineas_remotas) > 1 else []
+
         # Crear un conjunto de registros remotos para verificar cuáles son nuevos
-        # Usamos una tupla con todos los campos para identificar registros únicos
         registros_remotos_set = set(registros_remotos)
-        
+
         # Agregar solo los registros locales que NO existen en el remoto (al final)
         registros_nuevos = []
         for linea in lineas_locales[1:]:
-            if linea.strip() and linea not in registros_remotos_set:
+            if linea and linea not in registros_remotos_set:
                 registros_nuevos.append(linea)
-        
+
         # Combinar: remoto (preservado) + nuevos locales (al final)
         todos_registros = registros_remotos + registros_nuevos
-        
+
         contenido_merged = encabezado + "\n" + "\n".join(todos_registros) + "\n"
-        
-        # Guardar localmente el merge
+
+        # Guardar localmente el merge, asegurando un salto de línea por registro
         with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
             f.write(contenido_merged)
-        
+
         return escribir_repo(contenido_merged)
     else:
         # Si no hay versión remota, subir la local
+        contenido_local = "\n".join(lineas_locales) + "\n"
         return escribir_repo(contenido_local)
 
 # Listas de opciones
