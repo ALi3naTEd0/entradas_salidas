@@ -138,23 +138,30 @@ def sincronizar_a_gist():
     contenido_remoto = leer_repo()
     
     if contenido_remoto:
-        # Hacer merge: combinar registros únicos
+        # Hacer merge: preservar orden del remoto y agregar nuevos registros locales al final
         lineas_locales = contenido_local.strip().split("\n")
         lineas_remotas = contenido_remoto.strip().split("\n")
         
         # Primera línea es el encabezado
         encabezado = lineas_locales[0] if lineas_locales else lineas_remotas[0]
         
-        # Combinar registros únicos (sin duplicados)
-        registros = set()
-        for linea in lineas_locales[1:] + lineas_remotas[1:]:
-            if linea.strip():
-                registros.add(linea)
+        # Mantener todos los registros remotos en su orden original (preserva duplicados válidos)
+        registros_remotos = [linea for linea in lineas_remotas[1:] if linea.strip()]
         
-        # Reconstruir CSV ordenado por fecha (primera columna)
-        registros_ordenados = sorted(registros, key=lambda x: x.split(",")[0] if x else "")
+        # Crear un conjunto de registros remotos para verificar cuáles son nuevos
+        # Usamos una tupla con todos los campos para identificar registros únicos
+        registros_remotos_set = set(registros_remotos)
         
-        contenido_merged = encabezado + "\n" + "\n".join(registros_ordenados) + "\n"
+        # Agregar solo los registros locales que NO existen en el remoto (al final)
+        registros_nuevos = []
+        for linea in lineas_locales[1:]:
+            if linea.strip() and linea not in registros_remotos_set:
+                registros_nuevos.append(linea)
+        
+        # Combinar: remoto (preservado) + nuevos locales (al final)
+        todos_registros = registros_remotos + registros_nuevos
+        
+        contenido_merged = encabezado + "\n" + "\n".join(todos_registros) + "\n"
         
         # Guardar localmente el merge
         with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
