@@ -53,7 +53,7 @@ GITHUB_REPO, GITHUB_TOKEN = cargar_config()
 REPO_FILENAME = "registro.csv"
 
 # Archivo local para caché/backup
-CSV_FILE = os.path.join(BASE_PATH, "registro_local.csv")
+CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
 
 # Variable global para almacenar el SHA del archivo
 archivo_sha = None
