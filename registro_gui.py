@@ -51,6 +51,8 @@ def cargar_config():
 
 # Cargar configuración
 GITHUB_REPO, GITHUB_TOKEN = cargar_config()
+# Branch to use in GitHub links
+GITHUB_BRANCH = "main"
 REPO_FILENAME = "registro.csv"
 
 # Archivo local para caché/backup
@@ -203,6 +205,64 @@ COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
 CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "variedad_mix", "cliente", "no_aplicacion"]
+
+# UI font constants for consistent look
+STATUS_DOT_FONT = ('TkDefaultFont', 12)
+STATUS_TEXT_FONT = ('TkDefaultFont', 10)
+LINK_FONT = ('TkDefaultFont', 10, 'underline')
+# Link color used across the app (matches lotes template)
+LINK_COLOR = 'blue'
+
+# Global callback to update status from other modules
+update_status = None
+__update_indicator_lbl = None
+__update_text_lbl = None
+__update_link_lbl = None
+
+def update_status_local(connected, message):
+    """Actualiza el indicador (color) y el texto (normal) si los widgets están registrados."""
+    global __update_indicator_lbl, __update_text_lbl, __update_link_lbl
+    if __update_indicator_lbl is None or __update_text_lbl is None:
+        return False
+    try:
+        import webbrowser
+        if connected:
+            color = 'green'
+            if message and message.strip().lower() != 'conectado':
+                texto = f'Conectado - {message}'
+            else:
+                texto = 'Conectado'
+            __update_indicator_lbl.config(fg=color)
+            __update_text_lbl.config(text=texto)
+            try:
+                __update_link_lbl.config(fg=LINK_COLOR, cursor='hand2')
+                __update_link_lbl.bind('<Button-1>', lambda e: webbrowser.open(f"https://github.com/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{REPO_FILENAME}"))
+            except Exception:
+                pass
+        else:
+            color = '#e74c3c'
+            if message and message.strip().lower() != 'sin conexión':
+                texto = f'Sin conexión - {message}'
+            else:
+                texto = 'Sin conexión'
+            __update_indicator_lbl.config(fg=color)
+            __update_text_lbl.config(text=texto)
+            try:
+                __update_link_lbl.config(fg='gray', cursor='arrow')
+                __update_link_lbl.unbind('<Button-1>')
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return True
+
+def _register_status_widgets(indicator_widget, text_widget, link_widget):
+    """Registrar widgets para permitir update_status(connected, message) desde fuera."""
+    global __update_indicator_lbl, __update_text_lbl, __update_link_lbl, update_status
+    __update_indicator_lbl = indicator_widget
+    __update_text_lbl = text_widget
+    __update_link_lbl = link_widget
+    update_status = update_status_local
 
 class RegistroApp:
     def abrir_editor_registros(self):
@@ -502,25 +562,80 @@ class RegistroApp:
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
         
-        # Indicador de conexión
+        # Estado inicial según si se sincronizó al iniciar
         if self.gist_conectado:
-            color = "#2ecc71"  # Verde
-            texto = "● Conectado"
+            color = 'green'  # verde
+            texto = "Conectado"
         else:
-            color = "#e74c3c"  # Rojo
-            texto = "● Sin conexión"
-        
-        self.lbl_status = tk.Label(status_frame, text=texto, fg=color, font=("Arial", 9, "bold"))
-        self.lbl_status.pack(side="left", padx=(0, 10))
-        
-        # Link al Repo
-        repo_url = f"https://github.com/{GITHUB_REPO}/blob/main/{REPO_FILENAME}"
-        lbl_link = tk.Label(status_frame, text=f"{REPO_FILENAME}", fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
+            color = "red"  # rojo
+            texto = "Sin conexión"
+
+        # Crear widgets primero (evita warnings de Pylance por variables no definidas)
+        self.status_indicator = tk.Label(status_frame, text='●', fg=color, font=STATUS_DOT_FONT)
+        self.status_indicator.pack(side='left')
+        self.status_label = tk.Label(status_frame, text=texto, font=STATUS_TEXT_FONT)
+        self.status_label.pack(side='left', padx=(6, 10))
+
+        # Link al Repo (deshabilitado hasta que haya conexión)
+        repo_url = f"https://github.com/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{REPO_FILENAME}"
+        def open_github_file(event=None):
+            try:
+                webbrowser.open_new_tab(repo_url)
+            except Exception:
+                pass
+        if self.gist_conectado:
+            lbl_link = tk.Label(status_frame, text=f"{REPO_FILENAME}", fg=LINK_COLOR, cursor="hand2", font=LINK_FONT)
+            lbl_link.bind("<Button-1>", open_github_file)
+        else:
+            lbl_link = tk.Label(status_frame, text=f"{REPO_FILENAME}", fg='gray', cursor="arrow", font=LINK_FONT)
         lbl_link.pack(side="left")
-        lbl_link.bind("<Button-1>", lambda e: webbrowser.open(repo_url))
+        # Registrar widgets para que `update_status` pueda ser llamada desde fuera
+        _register_status_widgets(self.status_indicator, self.status_label, lbl_link)
+
+        # Definir la función de actualización ahora que los widgets existen (evita reportUndefinedVariable)
+        def update_status_local(connected, message):
+            try:
+                if connected:
+                    self.status_indicator.config(text='●', fg='green')
+                    # Evitar repetir 'Conectado - Conectado' si el mensaje es exactamente 'Conectado'
+                    if message and message.strip().lower() != 'conectado':
+                        self.status_label.config(text=f'Conectado - {message}')
+                    else:
+                        self.status_label.config(text='Conectado')
+                    # Habilitar enlace
+                    try:
+                        lbl_link.config(fg=LINK_COLOR, cursor='hand2')
+                        lbl_link.bind('<Button-1>', open_github_file)
+                    except Exception:
+                        pass
+                else:
+                    self.status_indicator.config(text='●', fg='#e74c3c')
+                    # Evitar repetir 'Sin conexión - Sin conexión' si el mensaje ya indica 'Sin conexión'
+                    if message and message.strip().lower() != 'sin conexión':
+                        self.status_label.config(text=f'Sin conexión - {message}')
+                    else:
+                        self.status_label.config(text='Sin conexión')
+                    # Deshabilitar enlace
+                    try:
+                        lbl_link.config(fg='#7f8c8d', cursor='arrow')
+                        lbl_link.unbind('<Button-1>')
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        # Exponer callback global
+        global update_status
+        update_status = update_status_local
+
+        # Asegurar que el estado inicial se refleje correctamente
+        try:
+            update_status_local(self.gist_conectado, '')
+        except Exception:
+            pass
         
         # Versión
-        lbl_version = tk.Label(status_frame, text=VERSION, fg="#7f8c8d", font=("Arial", 9))
+        lbl_version = tk.Label(status_frame, text=VERSION, fg="#7f8c8d", font=STATUS_TEXT_FONT)
         lbl_version.pack(side="right", padx=(10, 5))
         
         # Botón para refrescar conexión
@@ -557,15 +672,38 @@ class RegistroApp:
     def refrescar_conexion(self):
         """Refresca la conexión con el Repo"""
         self.root.config(cursor="watch")
+        # Mostrar estado temporal mientras se verifica
+        try:
+            self.status_indicator.config(fg='#7f8c8d')
+            self.status_label.config(text='Verificando...')
+        except Exception:
+            pass
         self.root.update()
         
-        if sincronizar_desde_gist():
+        success = sincronizar_desde_gist()
+        if success:
             self.gist_conectado = True
-            self.lbl_status.config(text="● Conectado", fg="#2ecc71")
+            # Usar el callback global si está disponible para mantener patrón
+            try:
+                update_status(True, 'Datos sincronizados desde GitHub Repo')
+            except Exception:
+                # Fallback directo al indicator + texto
+                try:
+                    self.status_indicator.config(fg='green')
+                    self.status_label.config(text="Conectado")
+                except Exception:
+                    pass
             messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Repo")
         else:
             self.gist_conectado = False
-            self.lbl_status.config(text="● Sin conexión", fg="#e74c3c")
+            try:
+                update_status(False, 'No se pudo conectar con GitHub Gist')
+            except Exception:
+                try:
+                    self.status_indicator.config(fg="#e74c3c")
+                    self.status_label.config(text="Sin conexión")
+                except Exception:
+                    pass
             messagebox.showwarning("Error", "No se pudo conectar con GitHub Gist")
         
         self.root.config(cursor="")
