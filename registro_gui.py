@@ -561,11 +561,11 @@ class RegistroApp:
         
         if sincronizar_desde_gist():
             self.gist_conectado = True
-            self.lbl_status.config(text="? Conectado", fg="#2ecc71")
+            self.lbl_status.config(text="● Conectado", fg="#2ecc71")
             messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Repo")
         else:
             self.gist_conectado = False
-            self.lbl_status.config(text="? Sin conexión", fg="#e74c3c")
+            self.lbl_status.config(text="● Sin conexión", fg="#e74c3c")
             messagebox.showwarning("Error", "No se pudo conectar con GitHub Gist")
         
         self.root.config(cursor="")
