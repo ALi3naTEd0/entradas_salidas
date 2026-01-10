@@ -174,7 +174,7 @@ def sincronizar_a_gist():
 # Listas de opciones
 VARIEDADES = [
     "AK-47", "APPLE FRITTER", "BANANA LATTE", "BLACKBERRY HONEY",
-    "GRAN JEFA", "KANDY KUSH", "KING KUSH BREATH", "MICHAEL JORDAN",
+    "GRAN JEFA", "KANDY KUSH", "KING KUSH BREATH", "KOSHER KUSH", "MICHAEL JORDAN",
     "MIX", "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
@@ -544,9 +544,12 @@ class RegistroApp:
         tipo = self.tipo_movimiento.get()
         plantas_val = self.plantas.get() if tipo != "Salida" else "0"
         motivo = self.motivo.get()
+        variedad_mix_val = ""
+        # Evitar error si variedad_mix no existe
+        if self.variedad.get() == "MIX" and hasattr(self, 'variedad_mix'):
+            variedad_mix_val = self.variedad_mix.get() if self.variedad_mix.get() else ""
         cliente = self.cliente.get() if (tipo == "Salida" and motivo == "venta") else ""
-        variedad_val = self.variedad.get()
-        variedad_mix_val = self.variedad_mix.get() if (variedad_val == "MIX" and tipo == "Entrada") else ""
+        motivo_val = motivo
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
@@ -555,11 +558,11 @@ class RegistroApp:
             else:
                 gramos_val = str(abs(gramos_float))
         except Exception:
-            pass
+            pass  # Si no es numérico, se guarda como está y la validación lo atrapará después
         no_aplicacion_val = ""  # Se edita desde Filtrar registro
         datos = [
             self.fecha.get(),
-            variedad_val,
+            self.variedad.get(),
             self.colaborador.get() if tipo != "Salida" else "",
             gramos_val,
             plantas_val,
@@ -567,19 +570,26 @@ class RegistroApp:
             self.sucursal.get(),
             self.lote.get(),
             motivo,
-            variedad_mix_val,
+            variedad_mix_val,  # <-- ahora sí se guarda en la columna correcta
             cliente,
             no_aplicacion_val,
             tipo
         ]
         # Validación básica
         if tipo == "Salida":
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo]
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get()]
+            # motivo solo es obligatorio si variedad != 'MIX'
+            if not (self.variedad.get() == "MIX"):
+                campos_obligatorios.append(motivo)
             if motivo == "venta":
                 campos_obligatorios.append(cliente)
         else:
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo]
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get()]
+            # motivo solo es obligatorio si variedad != 'MIX'
+            if not (self.variedad.get() == "MIX"):
+                campos_obligatorios.append(motivo)
             # Colaborador es opcional (se puede dejar en blanco)
+            # variedad_mix NO es obligatorio nunca
         if not all(campos_obligatorios):
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
@@ -595,12 +605,13 @@ class RegistroApp:
             return
         # Escribir en CSV
         archivo_nuevo = not os.path.exists(CSV_FILE)
-        # Si el archivo existe pero no tiene la columna 'motivo' o 'cliente', rehacer encabezado y migrar filas
+        # Si el archivo existe pero no tiene la columna 'variedad_mix', 'motivo' o 'cliente', rehacer encabezado y migrar filas
         if not archivo_nuevo:
             with open(CSV_FILE, 'r', encoding='utf-8') as f:
                 filas = list(csv.reader(f))
             encabezado = filas[0] if filas else []
             esperado = CAMPOS + ["tipo"]
+            # Si falta variedad_mix o el orden es incorrecto, migrar
             if encabezado != esperado:
                 nuevas_filas = []
                 for fila in filas[1:]:
@@ -615,6 +626,7 @@ class RegistroApp:
                         fila_dict.get("sucursal", ""),
                         fila_dict.get("lote", ""),
                         fila_dict.get("motivo", ""),
+                        fila_dict.get("variedad_mix", ""),
                         fila_dict.get("cliente", fila_dict.get("quien", "")),
                         fila_dict.get("no_aplicacion", ""),
                         fila_dict.get("tipo", "Entrada")
@@ -627,6 +639,15 @@ class RegistroApp:
                         writer.writerow(fila)
         # Ahora sí, agregar el nuevo registro
         try:
+            # Antes de abrir en append, asegurarse de que el archivo termina en salto de línea
+            if os.path.exists(CSV_FILE):
+                with open(CSV_FILE, 'rb+') as f:
+                    f.seek(0, 2)
+                    if f.tell() > 0:
+                        f.seek(-1, 2)
+                        last_char = f.read(1)
+                        if last_char != b'\n':
+                            f.write(b'\n')
             with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 if archivo_nuevo:
@@ -644,6 +665,8 @@ class RegistroApp:
     def crear_widgets(self):
         tab_control = ttk.Notebook(self.root)
         tab_control.grid(row=0, column=0, sticky="nsew")
+
+        # Tab 1: Registro
         frame = ttk.Frame(tab_control, padding=10)
         tab_control.add(frame, text="Registro")
 
@@ -668,9 +691,6 @@ class RegistroApp:
         # Motivo y Quién (visibilidad dinámica)
         self.label_motivo = ttk.Label(frame, text="Motivo:")
         self.motivo = ttk.Combobox(frame, state="readonly")
-        self.label_variedad_mix = ttk.Label(frame, text="Variedad del Mix:")
-        self.variedad_mix = ttk.Combobox(frame, state="readonly")
-        self.variedad_mix.set("")
         self.label_cliente = ttk.Label(frame, text="Cliente (si venta):")
         self.cliente = ttk.Entry(frame)
         self.motivo.set("")
@@ -712,32 +732,30 @@ class RegistroApp:
         def on_tipo_change(event=None):
             tipo = self.tipo_movimiento.get()
             variedad = self.variedad.get()
-            self.label_variedad_mix.grid_remove()
-            self.variedad_mix.grid_remove()
-            if variedad == "MIX" and tipo == "Entrada":
-                variedades_mix = ["TODAS"] + [v for v in VARIEDADES if v != "MIX"]
-                self.variedad_mix['values'] = variedades_mix
-                self.variedad_mix.set("")
-                self.label_variedad_mix.grid(row=6, column=0, sticky="e")
-                self.variedad_mix.grid(row=6, column=1, padx=5, pady=2)
-                motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
-                self.label_motivo.grid(row=7, column=0, sticky="e")
-                self.motivo.grid(row=7, column=1, padx=5, pady=2)
+            # Motivos según tipo y variedad
+            if variedad == "MIX":
+                # Si es MIX, los motivos son las otras variedades
+                motivos = [v for v in VARIEDADES if v != "MIX"]
             elif tipo == "Salida":
                 motivos = ["venta", "pre-rolls", "mix", "ajuste"]
-                self.label_motivo.grid(row=6, column=0, sticky="e")
-                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             else:
+                # Entrada tiene todas las opciones
                 motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
-                self.label_motivo.grid(row=6, column=0, sticky="e")
-                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             self.motivo['values'] = motivos
             self.motivo.set("")
-            self.label_motivo.config(text="Motivo:")
+            # Motivo siempre en la fila 6
+            self.label_motivo.grid(row=6, column=0, sticky="e")
+            self.motivo.grid(row=6, column=1, padx=5, pady=2)
+            # Cambiar etiqueta de motivo si es MIX
+            if variedad == "MIX":
+                self.label_motivo.config(text="Variedad del Mix:")
+            else:
+                self.label_motivo.config(text="Motivo:")
+            # Quién solo si salida y motivo=venta
             def on_motivo_change(event2=None):
                 if self.tipo_movimiento.get() == "Salida" and self.motivo.get() == "venta":
-                    self.label_cliente.grid(row=7 if not (variedad == "MIX" and tipo == "Entrada") else 8, column=0, sticky="e")
-                    self.cliente.grid(row=7 if not (variedad == "MIX" and tipo == "Entrada") else 8, column=1, padx=5, pady=2)
+                    self.label_cliente.grid(row=7, column=0, sticky="e")
+                    self.cliente.grid(row=7, column=1, padx=5, pady=2)
                 else:
                     self.label_cliente.grid_remove()
                     self.cliente.grid_remove()
@@ -776,20 +794,17 @@ class RegistroApp:
                 # Ocultar campo no_aplicacion (se edita en Filtrar registro)
                 self.label_no_aplicacion.grid_remove()
                 self.no_aplicacion.grid_remove()
-                if variedad == "MIX" and tipo == "Entrada":
-                    self.sucursal_label_row = 8
-                    self.lote_label_row = 9
-                else:
-                    self.sucursal_label_row = 6
-                    self.lote_label_row = 7
+                # Sucursal y lote en filas 6 y 7
+                self.sucursal_label_row = 6
+                self.lote_label_row = 7
                 self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                if variedad == "MIX" and tipo == "Entrada":
-                    self.btn_guardar.grid(row=10, column=0, columnspan=2, pady=10)
-                else:
-                    self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                # Motivo en fila 8 para Entrada
+                self.label_motivo.grid(row=8, column=0, sticky="e")
+                self.motivo.grid(row=8, column=1, padx=5, pady=2)
+                self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
         self.tipo_movimiento.bind("<<ComboboxSelected>>", on_tipo_change)
         self.variedad.bind("<<ComboboxSelected>>", on_tipo_change)
         on_tipo_change()
@@ -1409,7 +1424,7 @@ class RegistroApp:
                     else:
                         lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
             if "tipo" in df.columns and "plantas" in df.columns:
-                               total_plantas = df[df["tipo"].str.lower() == "entrada"]["plantas"].astype(float).sum()
+                total_plantas = df[df["tipo"].str.lower() == "entrada"]["plantas"].astype(float).sum()
             elif "plantas" in df.columns:
                 total_plantas = df["plantas"].astype(float).sum()
             else:
@@ -1418,6 +1433,7 @@ class RegistroApp:
             total_registros = len(df)
             suma_gramos = df["gramos"].sum()
             promedio_gramos = df["gramos"].mean()
+
             max_registro = df.loc[df["gramos"].idxmax()]
             estadisticas = (
                 f"\nEstadísticas generales:\n"
@@ -1571,3 +1587,8 @@ class RegistroApp:
             self.fecha.set_date(datetime.now().date())
         except Exception:
             pass
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RegistroApp(root)
+    root.mainloop()
