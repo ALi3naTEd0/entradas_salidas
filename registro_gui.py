@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import sys
 import requests
 import base64
+import shutil
 
 # Soporte para ejecutable PyInstaller: buscar archivo en la misma carpeta que el .exe o script
 if getattr(sys, 'frozen', False):
@@ -464,6 +465,9 @@ class RegistroApp:
 
         self.crear_widgets()
         self.crear_barra_estado()
+
+        # Registrar handler de cierre para backup y eliminación del local
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         # Botón para abrir el editor de registros
         btn_editar = ttk.Button(self.root, text="Filtrar registro", command=self.abrir_editor_registros)
@@ -1623,6 +1627,33 @@ class RegistroApp:
             self.fecha.set_date(datetime.now().date())
         except Exception:
             pass
+
+    def _on_close(self):
+        """Backup del CSV local y eliminación sin pedir confirmación, luego cierra la app.
+        Crea `registros/backups/registro_backup_YYYYMMDD_HHMMSS.csv` y borra `registro.csv` si el backup fue exitoso.
+        """
+        try:
+            if os.path.exists(CSV_FILE):
+                backup_dir = os.path.join(BASE_PATH, "registros", "backups")
+                os.makedirs(backup_dir, exist_ok=True)
+                ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_file = os.path.join(backup_dir, f"registro_backup_{ts}.csv")
+                try:
+                    shutil.copy(CSV_FILE, backup_file)
+                    # Solo borrar si el backup fue exitoso
+                    try:
+                        os.remove(CSV_FILE)
+                    except Exception as e:
+                        print(f"Advertencia: no se pudo eliminar {CSV_FILE} después del backup: {e}")
+                except Exception as e:
+                    print(f"Error al crear backup de {CSV_FILE}: {e}")
+        except Exception as e:
+            print(f"Error durante el proceso de cierre: {e}")
+        finally:
+            try:
+                self.root.destroy()
+            except Exception:
+                os._exit(0)
 
 if __name__ == "__main__":
     root = tk.Tk()
