@@ -224,3 +224,4 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,varied
 2026-01-10,BANANA LATTE,,-22.0,0,DRE,RP,L2 - RP,mix,,,,Salida
 2026-01-10,MIX,,22.0,0,DRE,RP,L2 - RP,mix,BANANA LATTE,,,Entrada
 2026-01-10,MIX,,1824.0,0,DRE,RP,L1 - RP,ajuste,MIX,,,Entrada
+2026-01-10,WEDDING CAKE,,220.0,0,DRE,SMB,L1 - SMB,ajuste,,,,Entrada
