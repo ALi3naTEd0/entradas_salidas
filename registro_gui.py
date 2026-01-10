@@ -181,7 +181,7 @@ SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
-CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "cliente", "no_aplicacion"]
+CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "variedad_mix", "cliente", "no_aplicacion"]
 
 class RegistroApp:
     def abrir_editor_registros(self):
@@ -545,8 +545,8 @@ class RegistroApp:
         plantas_val = self.plantas.get() if tipo != "Salida" else "0"
         motivo = self.motivo.get()
         cliente = self.cliente.get() if (tipo == "Salida" and motivo == "venta") else ""
-        # Siempre incluir 'plantas' en ambas entradas y salidas (para Salida, valor por defecto '1')
-        # Si es salida, guardar gramos como negativo
+        variedad_val = self.variedad.get()
+        variedad_mix_val = self.variedad_mix.get() if (variedad_val == "MIX" and tipo == "Entrada") else ""
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
@@ -555,11 +555,11 @@ class RegistroApp:
             else:
                 gramos_val = str(abs(gramos_float))
         except Exception:
-            pass  # Si no es numérico, se guarda como está y la validación lo atrapará después
+            pass
         no_aplicacion_val = ""  # Se edita desde Filtrar registro
         datos = [
             self.fecha.get(),
-            self.variedad.get(),
+            variedad_val,
             self.colaborador.get() if tipo != "Salida" else "",
             gramos_val,
             plantas_val,
@@ -567,6 +567,7 @@ class RegistroApp:
             self.sucursal.get(),
             self.lote.get(),
             motivo,
+            variedad_mix_val,
             cliente,
             no_aplicacion_val,
             tipo
@@ -643,8 +644,6 @@ class RegistroApp:
     def crear_widgets(self):
         tab_control = ttk.Notebook(self.root)
         tab_control.grid(row=0, column=0, sticky="nsew")
-
-        # Tab 1: Registro
         frame = ttk.Frame(tab_control, padding=10)
         tab_control.add(frame, text="Registro")
 
@@ -669,6 +668,9 @@ class RegistroApp:
         # Motivo y Quién (visibilidad dinámica)
         self.label_motivo = ttk.Label(frame, text="Motivo:")
         self.motivo = ttk.Combobox(frame, state="readonly")
+        self.label_variedad_mix = ttk.Label(frame, text="Variedad del Mix:")
+        self.variedad_mix = ttk.Combobox(frame, state="readonly")
+        self.variedad_mix.set("")
         self.label_cliente = ttk.Label(frame, text="Cliente (si venta):")
         self.cliente = ttk.Entry(frame)
         self.motivo.set("")
@@ -710,32 +712,32 @@ class RegistroApp:
         def on_tipo_change(event=None):
             tipo = self.tipo_movimiento.get()
             variedad = self.variedad.get()
-            # Motivos según tipo y variedad
-            if variedad == "MIX":
-                # Si es MIX, los motivos son las otras variedades
-                motivos = [v for v in VARIEDADES if v != "MIX"]
-                if tipo == "Entrada":
-                    motivos = ["TODAS"] + motivos
+            self.label_variedad_mix.grid_remove()
+            self.variedad_mix.grid_remove()
+            if variedad == "MIX" and tipo == "Entrada":
+                variedades_mix = ["TODAS"] + [v for v in VARIEDADES if v != "MIX"]
+                self.variedad_mix['values'] = variedades_mix
+                self.variedad_mix.set("")
+                self.label_variedad_mix.grid(row=6, column=0, sticky="e")
+                self.variedad_mix.grid(row=6, column=1, padx=5, pady=2)
+                motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
+                self.label_motivo.grid(row=7, column=0, sticky="e")
+                self.motivo.grid(row=7, column=1, padx=5, pady=2)
             elif tipo == "Salida":
                 motivos = ["venta", "pre-rolls", "mix", "ajuste"]
+                self.label_motivo.grid(row=6, column=0, sticky="e")
+                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             else:
-                # Entrada tiene todas las opciones
                 motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
+                self.label_motivo.grid(row=6, column=0, sticky="e")
+                self.motivo.grid(row=6, column=1, padx=5, pady=2)
             self.motivo['values'] = motivos
             self.motivo.set("")
-            # Motivo siempre en la fila 6
-            self.label_motivo.grid(row=6, column=0, sticky="e")
-            self.motivo.grid(row=6, column=1, padx=5, pady=2)
-            # Cambiar etiqueta de motivo si es MIX
-            if variedad == "MIX":
-                self.label_motivo.config(text="Variedad del Mix:")
-            else:
-                self.label_motivo.config(text="Motivo:")
-            # Quién solo si salida y motivo=venta
+            self.label_motivo.config(text="Motivo:")
             def on_motivo_change(event2=None):
                 if self.tipo_movimiento.get() == "Salida" and self.motivo.get() == "venta":
-                    self.label_cliente.grid(row=7, column=0, sticky="e")
-                    self.cliente.grid(row=7, column=1, padx=5, pady=2)
+                    self.label_cliente.grid(row=7 if not (variedad == "MIX" and tipo == "Entrada") else 8, column=0, sticky="e")
+                    self.cliente.grid(row=7 if not (variedad == "MIX" and tipo == "Entrada") else 8, column=1, padx=5, pady=2)
                 else:
                     self.label_cliente.grid_remove()
                     self.cliente.grid_remove()
@@ -774,17 +776,20 @@ class RegistroApp:
                 # Ocultar campo no_aplicacion (se edita en Filtrar registro)
                 self.label_no_aplicacion.grid_remove()
                 self.no_aplicacion.grid_remove()
-                # Sucursal y lote en filas 6 y 7
-                self.sucursal_label_row = 6
-                self.lote_label_row = 7
+                if variedad == "MIX" and tipo == "Entrada":
+                    self.sucursal_label_row = 8
+                    self.lote_label_row = 9
+                else:
+                    self.sucursal_label_row = 6
+                    self.lote_label_row = 7
                 self.sucursal_label.grid(row=self.sucursal_label_row, column=0, sticky="e")
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                # Motivo en fila 8 para Entrada
-                self.label_motivo.grid(row=8, column=0, sticky="e")
-                self.motivo.grid(row=8, column=1, padx=5, pady=2)
-                self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                if variedad == "MIX" and tipo == "Entrada":
+                    self.btn_guardar.grid(row=10, column=0, columnspan=2, pady=10)
+                else:
+                    self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
         self.tipo_movimiento.bind("<<ComboboxSelected>>", on_tipo_change)
         self.variedad.bind("<<ComboboxSelected>>", on_tipo_change)
         on_tipo_change()
@@ -1336,7 +1341,7 @@ class RegistroApp:
             lista_descriptiva = []
             if len(filtros_aplicados) == 1 and campo in filtros_aplicados and campo != "sucursal":
                 valor = filtros[campo]
-                df_filtrado = df[df[campo].astype(str).str.upper() == valor.upper()]
+                df_filtrado = df[df[campo].str.upper() == valor.upper()]
                 resumen = df_filtrado.groupby("sucursal")["gramos"].sum().sort_values(ascending=False)
                 def plantas_entrada(subdf):
                     if "tipo" in subdf.columns and "plantas" in subdf.columns:
@@ -1404,7 +1409,7 @@ class RegistroApp:
                     else:
                         lista_descriptiva.append(f"{campo.capitalize()}: {grupo}\n  Total gramos: {resumen.iloc[i]:.2f}\n  Plantas (solo Entrada): {conteos.iloc[i]}\n  Lotes: {lotes_por_grupo.iloc[i]}")
             if "tipo" in df.columns and "plantas" in df.columns:
-                total_plantas = df[df["tipo"].str.lower() == "entrada"]["plantas"].astype(float).sum()
+                               total_plantas = df[df["tipo"].str.lower() == "entrada"]["plantas"].astype(float).sum()
             elif "plantas" in df.columns:
                 total_plantas = df["plantas"].astype(float).sum()
             else:
@@ -1566,8 +1571,3 @@ class RegistroApp:
             self.fecha.set_date(datetime.now().date())
         except Exception:
             pass
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = RegistroApp(root)
-    root.mainloop()
