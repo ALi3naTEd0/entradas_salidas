@@ -444,7 +444,13 @@ class RegistroApp:
                 self.root.iconphoto(True, tk.PhotoImage(file=icon_path))
         except Exception as e:
             pass  # Si hay error, continuar sin icono
-        
+
+        # Ajustar tamaño inicial y mínimo de la ventana principal
+        self.root.geometry("700x400")
+        self.root.minsize(700, 400)
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
         # Sincronizar desde Gist al iniciar
         self.root.config(cursor="watch")
         self.root.update()
@@ -455,10 +461,10 @@ class RegistroApp:
             print("No se pudo sincronizar, usando datos locales")
             self.gist_conectado = False
         self.root.config(cursor="")
-        
+
         self.crear_widgets()
         self.crear_barra_estado()
-        
+
         # Botón para abrir el editor de registros
         btn_editar = ttk.Button(self.root, text="Filtrar registro", command=self.abrir_editor_registros)
         btn_editar.grid(row=1, column=0, pady=5, sticky="w")
@@ -475,10 +481,10 @@ class RegistroApp:
         # Indicador de conexión
         if self.gist_conectado:
             color = "#2ecc71"  # Verde
-            texto = "● Conectado"
+            texto = "? Conectado"
         else:
             color = "#e74c3c"  # Rojo
-            texto = "● Sin conexión"
+            texto = "? Sin conexión"
         
         self.lbl_status = tk.Label(status_frame, text=texto, fg=color, font=("Arial", 9, "bold"))
         self.lbl_status.pack(side="left", padx=(0, 10))
@@ -531,11 +537,11 @@ class RegistroApp:
         
         if sincronizar_desde_gist():
             self.gist_conectado = True
-            self.lbl_status.config(text="● Conectado", fg="#2ecc71")
+            self.lbl_status.config(text="? Conectado", fg="#2ecc71")
             messagebox.showinfo("Éxito", "Datos sincronizados desde GitHub Repo")
         else:
             self.gist_conectado = False
-            self.lbl_status.config(text="● Sin conexión", fg="#e74c3c")
+            self.lbl_status.config(text="? Sin conexión", fg="#e74c3c")
             messagebox.showwarning("Error", "No se pudo conectar con GitHub Gist")
         
         self.root.config(cursor="")
@@ -560,7 +566,7 @@ class RegistroApp:
             else:
                 gramos_val = str(abs(gramos_float))
         except Exception:
-            pass  # Si no es numérico, se guarda como está y la validación lo atrapará después
+            pass  # Si no es numerico, se guarda como está y la validación lo atrapará después
         no_aplicacion_val = ""  # Se edita desde Filtrar registro
         datos = [
             self.fecha.get(),
@@ -732,7 +738,12 @@ class RegistroApp:
             tipo = self.tipo_movimiento.get()
             variedad = self.variedad.get()
             # Motivos
-            motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
+            if tipo == "Entrada":
+                motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
+            elif tipo == "Salida":
+                motivos = ["venta", "pre-rolls", "mix", "ajuste"]
+            else:
+                motivos = []
             if variedad == "MIX":
                 self.motivo['values'] = VARIEDADES
                 self.label_motivo.config(text="Variedad del Mix:")
