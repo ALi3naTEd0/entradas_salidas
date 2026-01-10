@@ -515,7 +515,7 @@ class RegistroApp:
         
         # Link al Repo
         repo_url = f"https://github.com/{GITHUB_REPO}/blob/main/{REPO_FILENAME}"
-        lbl_link = tk.Label(status_frame, text=f"GitHub: {GITHUB_REPO}", fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
+        lbl_link = tk.Label(status_frame, text=f"{REPO_FILENAME}", fg="#3498db", cursor="hand2", font=("Arial", 9, "underline"))
         lbl_link.pack(side="left")
         lbl_link.bind("<Button-1>", lambda e: webbrowser.open(repo_url))
         
