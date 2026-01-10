@@ -543,16 +543,15 @@ class RegistroApp:
     def guardar_registro(self):
         tipo = self.tipo_movimiento.get()
         plantas_val = self.plantas.get() if tipo != "Salida" else "0"
+        variedad = self.variedad.get()
         motivo = self.motivo.get()
-        variedad_mix_val = ""
-        # Si variedad es MIX, el valor de motivo va en variedad_mix y motivo queda vacío
-        if self.variedad.get() == "MIX":
+        if variedad == "MIX":
             variedad_mix_val = motivo
-            motivo_val = ""
+            motivo_val = self.motivo2.get()
         else:
             variedad_mix_val = ""
             motivo_val = motivo
-        cliente = self.cliente.get() if (tipo == "Salida" and motivo == "venta") else ""
+        cliente = self.cliente.get() if (tipo == "Salida" and motivo_val == "venta") else ""
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
@@ -580,17 +579,11 @@ class RegistroApp:
         ]
         # Validación básica
         if tipo == "Salida":
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get()]
-            # motivo solo es obligatorio si variedad != 'MIX'
-            if not (self.variedad.get() == "MIX"):
-                campos_obligatorios.append(motivo)
-            if motivo == "venta":
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo_val]
+            if motivo_val == "venta":
                 campos_obligatorios.append(cliente)
         else:
-            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get()]
-            # motivo solo es obligatorio si variedad != 'MIX'
-            if not (self.variedad.get() == "MIX"):
-                campos_obligatorios.append(motivo)
+            campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo_val]
             # Colaborador es opcional (se puede dejar en blanco)
             # variedad_mix NO es obligatorio nunca
         if not all(campos_obligatorios):
@@ -694,9 +687,12 @@ class RegistroApp:
         # Motivo y Quién (visibilidad dinámica)
         self.label_motivo = ttk.Label(frame, text="Motivo:")
         self.motivo = ttk.Combobox(frame, state="readonly")
+        self.label_motivo2 = ttk.Label(frame, text="Motivo:")
+        self.motivo2 = ttk.Combobox(frame, state="readonly")
         self.label_cliente = ttk.Label(frame, text="Cliente (si venta):")
         self.cliente = ttk.Entry(frame)
         self.motivo.set("")
+        self.motivo2.set("")
         self.cliente.delete(0, "end")
 
         # Colaborador y Supervisor (visibilidad dinámica)
@@ -735,34 +731,35 @@ class RegistroApp:
         def on_tipo_change(event=None):
             tipo = self.tipo_movimiento.get()
             variedad = self.variedad.get()
-            # Motivos según tipo y variedad
+            # Motivos
+            motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
             if variedad == "MIX":
-                # Si es MIX, los motivos son las otras variedades
-                motivos = [v for v in VARIEDADES if v != "MIX"]
-            elif tipo == "Salida":
-                motivos = ["venta", "pre-rolls", "mix", "ajuste"]
-            else:
-                # Entrada tiene todas las opciones
-                motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
-            self.motivo['values'] = motivos
-            self.motivo.set("")
-            # Motivo siempre en la fila 6
-            self.label_motivo.grid(row=6, column=0, sticky="e")
-            self.motivo.grid(row=6, column=1, padx=5, pady=2)
-            # Cambiar etiqueta de motivo si es MIX
-            if variedad == "MIX":
+                self.motivo['values'] = VARIEDADES
                 self.label_motivo.config(text="Variedad del Mix:")
+                self.motivo2['values'] = motivos
+                self.label_motivo2.config(text="Motivo:")
             else:
+                self.motivo['values'] = motivos
                 self.label_motivo.config(text="Motivo:")
+                self.label_motivo2.grid_remove()
+                self.motivo2.grid_remove()
+            self.motivo.set("")
+            self.motivo2.set("")
             # Quién solo si salida y motivo=venta
             def on_motivo_change(event2=None):
-                if self.tipo_movimiento.get() == "Salida" and self.motivo.get() == "venta":
-                    self.label_cliente.grid(row=7, column=0, sticky="e")
-                    self.cliente.grid(row=7, column=1, padx=5, pady=2)
+                motivo_check = self.motivo2.get() if variedad == "MIX" else self.motivo.get()
+                if self.tipo_movimiento.get() == "Salida" and motivo_check == "venta":
+                    self.label_cliente.grid(row=7 if tipo == "Salida" else 9, column=0, sticky="e")
+                    self.cliente.grid(row=7 if tipo == "Salida" else 9, column=1, padx=5, pady=2)
                 else:
                     self.label_cliente.grid_remove()
                     self.cliente.grid_remove()
-            self.motivo.bind("<<ComboboxSelected>>", on_motivo_change)
+            if variedad == "MIX":
+                self.motivo2.bind("<<ComboboxSelected>>", on_motivo_change)
+                self.motivo.unbind("<<ComboboxSelected>>")
+            else:
+                self.motivo.bind("<<ComboboxSelected>>", on_motivo_change)
+                self.motivo2.unbind("<<ComboboxSelected>>")
             on_motivo_change()
             if tipo == "Salida":
                 self.label_colaborador.grid_remove()
@@ -783,8 +780,21 @@ class RegistroApp:
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                # Botón guardar en la fila 8 (después de motivo y cliente)
-                self.btn_guardar.grid(row=8, column=0, columnspan=2, pady=10)
+                if variedad == "MIX":
+                    # Variedad del Mix en fila 6
+                    self.label_motivo.grid(row=6, column=0, sticky="e")
+                    self.motivo.grid(row=6, column=1, padx=5, pady=2)
+                    # Motivo en fila 7
+                    self.label_motivo2.grid(row=7, column=0, sticky="e")
+                    self.motivo2.grid(row=7, column=1, padx=5, pady=2)
+                    # Botón guardar en la fila 9
+                    self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                else:
+                    # Motivo en fila 6
+                    self.label_motivo.grid(row=6, column=0, sticky="e")
+                    self.motivo.grid(row=6, column=1, padx=5, pady=2)
+                    # Botón guardar en la fila 8
+                    self.btn_guardar.grid(row=8, column=0, columnspan=2, pady=10)
             else:
                 self.label_colaborador.grid(row=2, column=0, sticky="e")
                 self.colaborador.grid(row=2, column=1, padx=5, pady=2)
@@ -804,10 +814,21 @@ class RegistroApp:
                 self.sucursal.grid(row=self.sucursal_label_row, column=1, padx=5, pady=2)
                 self.label_lote.grid(row=self.lote_label_row, column=0, sticky="e")
                 self.lote.grid(row=self.lote_label_row, column=1, padx=5, pady=2)
-                # Motivo en fila 8 para Entrada
-                self.label_motivo.grid(row=8, column=0, sticky="e")
-                self.motivo.grid(row=8, column=1, padx=5, pady=2)
-                self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                if variedad == "MIX":
+                    # Variedad del Mix en fila 8
+                    self.label_motivo.grid(row=8, column=0, sticky="e")
+                    self.motivo.grid(row=8, column=1, padx=5, pady=2)
+                    # Motivo en fila 9
+                    self.label_motivo2.grid(row=9, column=0, sticky="e")
+                    self.motivo2.grid(row=9, column=1, padx=5, pady=2)
+                    # Botón guardar en la fila 10
+                    self.btn_guardar.grid(row=10, column=0, columnspan=2, pady=10)
+                else:
+                    # Motivo en fila 8
+                    self.label_motivo.grid(row=8, column=0, sticky="e")
+                    self.motivo.grid(row=8, column=1, padx=5, pady=2)
+                    # Botón guardar en la fila 9
+                    self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
         self.tipo_movimiento.bind("<<ComboboxSelected>>", on_tipo_change)
         self.variedad.bind("<<ComboboxSelected>>", on_tipo_change)
         on_tipo_change()
@@ -1583,6 +1604,7 @@ class RegistroApp:
         self.variedad.set("")
         self.sucursal.set("")
         self.motivo.set("")
+        self.motivo2.set("")
         self.cliente.delete(0, "end")
         self.no_aplicacion.delete(0, "end")
         # Solo actualiza la fecha si es necesario, y de forma segura
