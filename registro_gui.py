@@ -714,6 +714,8 @@ class RegistroApp:
             if variedad == "MIX":
                 # Si es MIX, los motivos son las otras variedades
                 motivos = [v for v in VARIEDADES if v != "MIX"]
+                if tipo == "Entrada":
+                    motivos = ["TODAS"] + motivos
             elif tipo == "Salida":
                 motivos = ["venta", "pre-rolls", "mix", "ajuste"]
             else:
