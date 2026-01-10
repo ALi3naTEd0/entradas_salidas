@@ -3,6 +3,7 @@ gist_config.txt
 github_config.txt
 
 # Archivos locales de datos
+registro.csv
 registro_local.csv
 
 # Carpeta de arqueos exportados

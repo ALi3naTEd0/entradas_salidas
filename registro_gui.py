@@ -118,12 +118,32 @@ def escribir_repo(contenido):
         return False
 
 def sincronizar_desde_gist():
-    """Descarga el CSV del Repo y lo guarda localmente"""
+    """Descarga el CSV del Repo y lo guarda localmente.
+
+    Antes de sobrescribir el archivo local, crea un backup timestamped en
+    `registros/backups/` para evitar pérdidas (política: sobrescribir + backup).
+    """
     contenido = leer_repo()
     if contenido:
-        with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
-            f.write(contenido)
-        return True
+        # Crear backup del archivo local si existe
+        try:
+            if os.path.exists(CSV_FILE):
+                backup_dir = os.path.join(BASE_PATH, "registros", "backups")
+                os.makedirs(backup_dir, exist_ok=True)
+                ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_file = os.path.join(backup_dir, f"registro_backup_{ts}.csv")
+                shutil.copy(CSV_FILE, backup_file)
+        except Exception as e:
+            # No interrumpimos la operación; solo notificamos
+            print(f"Advertencia: no se pudo crear backup antes de sobrescribir {CSV_FILE}: {e}")
+        # Sobrescribir local con la versión remota
+        try:
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                f.write(contenido)
+            return True
+        except Exception as e:
+            print(f"Error escribiendo archivo local desde repo: {e}")
+            return False
     return False
 
 def sincronizar_a_gist():
@@ -1629,31 +1649,14 @@ class RegistroApp:
             pass
 
     def _on_close(self):
-        """Backup del CSV local y eliminación sin pedir confirmación, luego cierra la app.
-        Crea `registros/backups/registro_backup_YYYYMMDD_HHMMSS.csv` y borra `registro.csv` si el backup fue exitoso.
+        """Cierre limpio: no elimina ni mueve `registro.csv` al cerrar.
+
+        El backup se realiza al sincronizar desde el repo (política: sobrescribir local con remoto y crear backup de la versión anterior).
         """
         try:
-            if os.path.exists(CSV_FILE):
-                backup_dir = os.path.join(BASE_PATH, "registros", "backups")
-                os.makedirs(backup_dir, exist_ok=True)
-                ts = datetime.now().strftime('%Y%m%d_%H%M%S')
-                backup_file = os.path.join(backup_dir, f"registro_backup_{ts}.csv")
-                try:
-                    shutil.copy(CSV_FILE, backup_file)
-                    # Solo borrar si el backup fue exitoso
-                    try:
-                        os.remove(CSV_FILE)
-                    except Exception as e:
-                        print(f"Advertencia: no se pudo eliminar {CSV_FILE} después del backup: {e}")
-                except Exception as e:
-                    print(f"Error al crear backup de {CSV_FILE}: {e}")
-        except Exception as e:
-            print(f"Error durante el proceso de cierre: {e}")
-        finally:
-            try:
-                self.root.destroy()
-            except Exception:
-                os._exit(0)
+            self.root.destroy()
+        except Exception:
+            os._exit(0)
 
 if __name__ == "__main__":
     root = tk.Tk()
