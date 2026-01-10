@@ -497,7 +497,7 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
-        VERSION = "v1.0.0"
+        VERSION = "v1.0.1"
         
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
