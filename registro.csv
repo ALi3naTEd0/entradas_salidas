@@ -1,4 +1,4 @@
-fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,variedad_mix,cliente,no_aplicacion,tipo
+fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,cliente,no_aplicacion,tipo
 2025-11-06,BANANA LATTE,KEF,50,1,DRE,SMB,L1 - SMB,trim,,,,Entrada
 2025-11-06,BANANA LATTE,KEF,36,1,DRE,SMB,L1 - SMB,trim,,,,Entrada
 2025-11-06,BANANA LATTE,KEF,21,1,DRE,SMB,L1 - SMB,trim,,,,Entrada
@@ -219,3 +219,4 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,varied
 2026-01-09,KANDY KUSH,,-371.0,0,DRE,RP,L2 - RP,ajuste,,,,Salida
 2026-01-09,MOZZARELLA,,84.0,0,DRE,RP,L2 - RP,ajuste,,,,Entrada
 2026-01-09,WEDDING CAKE,,-19.0,0,DRE,RP,L2 - RP,ajuste,,,,Salida
+2026-01-09,MIX,,1824.0,0,DRE,RP,L1 - RP,,,,,Entrada
