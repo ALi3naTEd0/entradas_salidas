@@ -545,11 +545,14 @@ class RegistroApp:
         plantas_val = self.plantas.get() if tipo != "Salida" else "0"
         motivo = self.motivo.get()
         variedad_mix_val = ""
-        # Evitar error si variedad_mix no existe
-        if self.variedad.get() == "MIX" and hasattr(self, 'variedad_mix'):
-            variedad_mix_val = self.variedad_mix.get() if self.variedad_mix.get() else ""
+        # Si variedad es MIX, el valor de motivo va en variedad_mix y motivo queda vacío
+        if self.variedad.get() == "MIX":
+            variedad_mix_val = motivo
+            motivo_val = ""
+        else:
+            variedad_mix_val = ""
+            motivo_val = motivo
         cliente = self.cliente.get() if (tipo == "Salida" and motivo == "venta") else ""
-        motivo_val = motivo
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
@@ -569,8 +572,8 @@ class RegistroApp:
             self.supervisor.get(),
             self.sucursal.get(),
             self.lote.get(),
-            motivo,
-            variedad_mix_val,  # <-- ahora sí se guarda en la columna correcta
+            motivo_val,
+            variedad_mix_val,
             cliente,
             no_aplicacion_val,
             tipo
