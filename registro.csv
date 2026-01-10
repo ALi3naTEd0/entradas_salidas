@@ -226,3 +226,4 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,varied
 2026-01-10,MIX,,1824.0,0,DRE,RP,L1 - RP,ajuste,MIX,,,Entrada
 2026-01-10,WEDDING CAKE,,220.0,0,DRE,SMB,L1 - SMB,ajuste,,,,Entrada
 2026-01-08,WEDDING CAKE,,-26.0,0,DRE,SMB,L1 - SMB,mix,,,,Salida
+2026-01-08,MIX,,26.0,0,DRE,SMB,L1 - SMB,mix,WEDDING CAKE,,,Entrada
