@@ -505,10 +505,10 @@ class RegistroApp:
         # Indicador de conexión
         if self.gist_conectado:
             color = "#2ecc71"  # Verde
-            texto = "? Conectado"
+            texto = "● Conectado"
         else:
             color = "#e74c3c"  # Rojo
-            texto = "? Sin conexión"
+            texto = "● Sin conexión"
         
         self.lbl_status = tk.Label(status_frame, text=texto, fg=color, font=("Arial", 9, "bold"))
         self.lbl_status.pack(side="left", padx=(0, 10))
