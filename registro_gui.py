@@ -713,6 +713,10 @@ class RegistroApp:
         plantas_val = self.plantas.get() if tipo != "Salida" else "0"
         variedad = self.variedad.get()
         motivo = self.motivo.get()
+        # Validar que la variedad sea una opción conocida (evita guardar registros de prueba como 'VarA')
+        if variedad and variedad not in VARIEDADES and variedad != "MIX":
+            messagebox.showerror("Error", f"Variedad inválida: '{variedad}'. Seleccione una variedad válida.")
+            return
         if variedad == "MIX":
             variedad_mix_val = motivo
             motivo_val = self.motivo2.get()
@@ -723,10 +727,17 @@ class RegistroApp:
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
-            if tipo == "Salida":
-                gramos_val = str(-abs(gramos_float))
+            # Formatear sin decimales si es entero (p.ej. '0' en lugar de '0.0')
+            abs_val = abs(gramos_float)
+            if abs_val.is_integer():
+                gramos_str = str(int(abs_val))
             else:
-                gramos_val = str(abs(gramos_float))
+                # Mantener hasta 2 decimales y eliminar ceros finales
+                gramos_str = f"{abs_val:.2f}".rstrip('0').rstrip('.')
+            if tipo == "Salida":
+                gramos_val = "-" + gramos_str
+            else:
+                gramos_val = gramos_str
         except Exception:
             pass  # Si no es numerico, se guarda como está y la validación lo atrapará después
         no_aplicacion_val = ""  # Se edita desde Filtrar registro
@@ -754,8 +765,9 @@ class RegistroApp:
             campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo_val]
             # Colaborador es opcional (se puede dejar en blanco)
             # variedad_mix NO es obligatorio nunca
-        if not all(campos_obligatorios):
-            messagebox.showerror("Error", "Todos los campos son obligatorios.")
+        # Permitir valores numéricos como 0; considerar vacíos solo cuando la cadena esté vacía o sea None
+        if any(v is None or str(v).strip() == "" for v in campos_obligatorios):
+            messagebox.showerror("Error", "Todos los campos obligatorios deben estar completos (0 es válido).")
             return
         try:
             float(self.gramos.get())  # gramos debe ser numérico
