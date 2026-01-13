@@ -54,7 +54,7 @@ Si `github_config.txt` no existe, la aplicación lo creará con un ejemplo y ped
 El archivo CSV esperado tiene la siguiente cabecera (orden y nombres de columnas):
 
 ```
-fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,variedad_mix,cliente,no_aplicacion,tipo
+fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta,variedad_mix,cliente,no_aplicacion,tipo
 ```
 
 - `fecha`: `YYYY-MM-DD`
@@ -62,7 +62,8 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,varied
 - `colaborador`: iniciales del colaborador (vacío en Salida)
 - `gramos`: número; en Salida se guarda como negativo (ej. `-12`)
 - `plantas`: entero (solo para entradas)
-- `supervisor`, `sucursal`, `lote`, `motivo`, `cliente`, `no_aplicacion` (string)
+- `supervisor`, `sucursal`, `lote`, `motivo`, `maceta`, `cliente`, `no_aplicacion` (string)
+- `maceta`: opción `Maceta chica` o `Maceta grande` (opcional, solo aplicable en Entradas cuando `motivo == 'trim'`)
 - `tipo`: `Entrada` o `Salida`
 
 La aplicación realiza migraciones automáticas si el encabezado es distinto al esperado.
