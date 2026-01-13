@@ -415,7 +415,7 @@ class RegistroApp:
             if col_idx == CAMPOS.index("motivo"):
                 tipo = tree.set(item, "tipo")
                 if tipo == "Salida":
-                    opciones = ["venta", "pre-rolls", "mix"]
+                    opciones = ["venta", "pre-rolls", "mix", "ajuste", "traslado"]
                 else:
                     opciones = ["inventario", "trim", "traslado", "flor", "mix"]
                 combo = ttk.Combobox(tree, values=opciones, state="readonly")
@@ -915,7 +915,7 @@ class RegistroApp:
             if tipo == "Entrada":
                 motivos = ["inventario", "trim", "traslado", "flor", "mix", "ajuste"]
             elif tipo == "Salida":
-                motivos = ["venta", "pre-rolls", "mix", "ajuste"]
+                motivos = ["venta", "pre-rolls", "mix", "ajuste", "traslado"]
             else:
                 motivos = []
             if variedad == "MIX":
