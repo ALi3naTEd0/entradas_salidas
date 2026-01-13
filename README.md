@@ -2,6 +2,8 @@
 
 Descripción breve
 
+Sitio de presentación disponible en `docs/` (landing page lista para GitHub Pages, con logo tomado de `docs/assets/`).
+
 Aplicación GUI (Tkinter) para registro, seguimiento y arqueo de entradas y salidas de producto por lote y sucursal. Permite sincronizar el archivo `registro.csv` con un repositorio de GitHub (vía API), filtrar y editar registros, exportar informes (TXT/PDF/CSV), y generar gráficos y resúmenes por lote y por filtros.
 
 ## ✅ Características principales
