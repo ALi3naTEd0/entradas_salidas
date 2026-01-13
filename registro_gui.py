@@ -204,7 +204,7 @@ SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
-CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "variedad_mix", "cliente", "no_aplicacion"]
+CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "maceta", "variedad_mix", "cliente", "no_aplicacion"]
 
 # UI font constants for consistent look
 STATUS_DOT_FONT = ('TkDefaultFont', 12)
@@ -407,7 +407,7 @@ class RegistroApp:
                 return
             col = tree.identify_column(event.x)
             col_idx = int(col.replace('#','')) - 1
-            if col_idx not in [CAMPOS.index("motivo"), CAMPOS.index("cliente"), CAMPOS.index("no_aplicacion")]:
+            if col_idx not in [CAMPOS.index("motivo"), CAMPOS.index("maceta"), CAMPOS.index("cliente"), CAMPOS.index("no_aplicacion")]:
                 return
             x, y, width, height = tree.bbox(item, col)
             valor_actual = tree.set(item, CAMPOS[col_idx])
@@ -450,6 +450,18 @@ class RegistroApp:
                         entry.destroy()
                     entry.bind("<Return>", guardar_edicion)
                     entry.bind("<FocusOut>", guardar_edicion)
+            elif col_idx == CAMPOS.index("maceta"):
+                # Opciones fijas para maceta
+                opciones_maceta = ["Maceta chica", "Maceta grande"]
+                combo = ttk.Combobox(tree, values=opciones_maceta, state="readonly")
+                combo.place(x=x, y=y, width=width, height=height)
+                combo.set(valor_actual)
+                combo.focus()
+                def guardar_combo_maceta(e=None):
+                    tree.set(item, CAMPOS[col_idx], combo.get())
+                    combo.destroy()
+                combo.bind("<Return>", guardar_combo_maceta)
+                combo.bind("<FocusOut>", guardar_combo_maceta)
             elif col_idx == CAMPOS.index("no_aplicacion"):
                 entry = tk.Entry(tree)
                 entry.place(x=x, y=y, width=width, height=height)
@@ -724,6 +736,8 @@ class RegistroApp:
             variedad_mix_val = ""
             motivo_val = motivo
         cliente = self.cliente.get() if (tipo == "Salida" and motivo_val == "venta") else ""
+        # Maceta solo aplica para Entradas con motivo 'trim'
+        maceta_val = self.maceta.get() if (tipo == "Entrada" and motivo_val == "trim") else ""
         gramos_val = self.gramos.get()
         try:
             gramos_float = float(gramos_val)
@@ -751,6 +765,7 @@ class RegistroApp:
             self.sucursal.get(),
             self.lote.get(),
             motivo_val,
+            maceta_val,
             variedad_mix_val,
             cliente,
             no_aplicacion_val,
@@ -763,6 +778,7 @@ class RegistroApp:
                 campos_obligatorios.append(cliente)
         else:
             campos_obligatorios = [self.fecha.get(), self.variedad.get(), self.gramos.get(), plantas_val, self.supervisor.get(), self.sucursal.get(), self.lote.get(), motivo_val]
+            # Maceta es opcional para Entradas con motivo 'trim' (puede dejarse en blanco)
             # Colaborador es opcional (se puede dejar en blanco)
             # variedad_mix NO es obligatorio nunca
         # Permitir valores numéricos como 0; considerar vacíos solo cuando la cadena esté vacía o sea None
@@ -802,6 +818,7 @@ class RegistroApp:
                         fila_dict.get("sucursal", ""),
                         fila_dict.get("lote", ""),
                         fila_dict.get("motivo", ""),
+                        fila_dict.get("maceta", ""),
                         fila_dict.get("variedad_mix", ""),
                         fila_dict.get("cliente", fila_dict.get("quien", "")),
                         fila_dict.get("no_aplicacion", ""),
@@ -871,9 +888,13 @@ class RegistroApp:
         self.motivo2 = ttk.Combobox(frame, state="readonly")
         self.label_cliente = ttk.Label(frame, text="Cliente (si venta):")
         self.cliente = ttk.Entry(frame)
+        # Maceta (solo para Entrada con motivo 'trim')
+        self.label_maceta = ttk.Label(frame, text="Maceta (si trim):")
+        self.maceta = ttk.Combobox(frame, values=["Maceta chica", "Maceta grande"], state="readonly")
         self.motivo.set("")
         self.motivo2.set("")
         self.cliente.delete(0, "end")
+        self.maceta.set("")
 
         # Colaborador y Supervisor (visibilidad dinámica)
         self.label_colaborador = ttk.Label(frame, text="Colaborador:")
@@ -933,12 +954,39 @@ class RegistroApp:
             # Quién solo si salida y motivo=venta
             def on_motivo_change(event2=None):
                 motivo_check = self.motivo2.get() if variedad == "MIX" else self.motivo.get()
-                if self.tipo_movimiento.get() == "Salida" and motivo_check == "venta":
-                    self.label_cliente.grid(row=7 if tipo == "Salida" else 9, column=0, sticky="e")
-                    self.cliente.grid(row=7 if tipo == "Salida" else 9, column=1, padx=5, pady=2)
+                tipo_actual = self.tipo_movimiento.get()
+                # Mostrar cliente solo si es Salida y motivo = venta
+                if tipo_actual == "Salida" and motivo_check == "venta":
+                    self.label_cliente.grid(row=7 if tipo_actual == "Salida" else 9, column=0, sticky="e")
+                    self.cliente.grid(row=7 if tipo_actual == "Salida" else 9, column=1, padx=5, pady=2)
                 else:
                     self.label_cliente.grid_remove()
                     self.cliente.grid_remove()
+                # Mostrar maceta (opcional) solo si es Entrada y motivo = trim
+                if tipo_actual == "Entrada" and motivo_check == "trim":
+                    if variedad == "MIX":
+                        maceta_row = 10
+                        btn_row = 11
+                    else:
+                        maceta_row = 9
+                        btn_row = 10
+                    self.label_maceta.grid(row=maceta_row, column=0, sticky="e")
+                    self.maceta.grid(row=maceta_row, column=1, padx=5, pady=2)
+                    self.btn_guardar.grid(row=btn_row, column=0, columnspan=2, pady=10)
+                else:
+                    self.label_maceta.grid_remove()
+                    self.maceta.grid_remove()
+                    # Restaurar posición del botón según tipo y variedad
+                    if tipo_actual == "Salida":
+                        if variedad == "MIX":
+                            self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                        else:
+                            self.btn_guardar.grid(row=8, column=0, columnspan=2, pady=10)
+                    else:
+                        if variedad == "MIX":
+                            self.btn_guardar.grid(row=10, column=0, columnspan=2, pady=10)
+                        else:
+                            self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
             if variedad == "MIX":
                 self.motivo2.bind("<<ComboboxSelected>>", on_motivo_change)
                 self.motivo.unbind("<<ComboboxSelected>>")
