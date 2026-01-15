@@ -858,6 +858,11 @@ class RegistroApp:
     def crear_widgets(self):
         tab_control = ttk.Notebook(self.root)
         tab_control.grid(row=0, column=0, sticky="nsew")
+        try:
+            # Al cambiar de pestaña, refrescar Inventario si se selecciona esa pestaña
+            tab_control.bind("<<NotebookTabChanged>>", lambda e: self.mostrar_inventario_total() if tab_control.tab(tab_control.select(), "text") == "Inventario Total" else None)
+        except Exception:
+            pass
 
         # Tab 1: Registro
         frame = ttk.Frame(tab_control, padding=10)
@@ -1197,7 +1202,11 @@ class RegistroApp:
         ttk.Button(btn_frame_inv, text="Exportar CSV", command=self.exportar_inventario_csv).pack(side="left", padx=5)
 
         cols = ["variedad"] + SUCURSALES + ["total_gramos", "total_libras"]
-        self.tree_inventario = ttk.Treeview(inventario_frame, columns=cols, show="headings", height=14)
+        style = ttk.Style()
+        # Estilo base para dar aspecto limpio y permitir customizaciones
+        style.configure("Inventory.Treeview", background="white", fieldbackground="white", rowheight=22)
+        style.map("Inventory.Treeview", background=[('selected', '#bfe6ff')])
+        self.tree_inventario = ttk.Treeview(inventario_frame, columns=cols, show="headings", height=14, style="Inventory.Treeview")
         for c in cols:
             heading = c.upper() if c not in SUCURSALES else c
             self.tree_inventario.heading(c, text=heading.replace("_", " "))
@@ -1205,12 +1214,41 @@ class RegistroApp:
                 self.tree_inventario.column(c, width=200)
             else:
                 self.tree_inventario.column(c, width=100, anchor="e")
+        # Configurar tags para alternar color de filas y resaltar TOTAL
+        self.tree_inventario.tag_configure('odd', background='#ffffff')
+        self.tree_inventario.tag_configure('even', background='#f6f6f6')
+        try:
+            # Intentar aplicar fuente en la fila TOTAL (algunos temas pueden ignorarlo)
+            self.tree_inventario.tag_configure('total', background='#dfeefc', font=('TkDefaultFont', 10, 'bold'))
+        except Exception:
+            self.tree_inventario.tag_configure('total', background='#dfeefc')
+
         self.tree_inventario.grid(row=2, column=0, columnspan=6, sticky="nsew")
         inv_scroll = ttk.Scrollbar(inventario_frame, orient="vertical", command=self.tree_inventario.yview)
         inv_scroll.grid(row=2, column=6, sticky="ns")
         self.tree_inventario.configure(yscrollcommand=inv_scroll.set)
+        # Cargar inventario inicialmente para que se muestre sin necesidad de pulsar Refrescar
+        try:
+            self.mostrar_inventario_total()
+        except Exception:
+            pass
         inventario_frame.grid_rowconfigure(2, weight=1)
         inventario_frame.grid_columnconfigure(5, weight=1)
+
+        # Estilos: alternate row backgrounds to simulate grid lines y destacar totales en negrita
+        style = ttk.Style()
+        try:
+            style.theme_use(style.theme_use())
+        except Exception:
+            pass
+        style.configure("Treeview", rowheight=20, font=("Arial", 10))
+        style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
+        # Definir tags para filas (parecido a líneas semi-transparentes entre filas usando fondos sutiles)
+        self.tree_inventario.tag_configure('odd', background='#ffffff')
+        self.tree_inventario.tag_configure('even', background='#f6f8fa')
+        self.tree_inventario.tag_configure('total', background='#dfeff7', font=("Arial", 10, "bold"))
+        # Asegurar que la fila seleccionada sea visible con contraste
+        style.map('Treeview', background=[('selected', '#bcd4ff')], foreground=[('selected', 'black')])
 
     def actualizar_lotes_corte(self, event=None):
         """Actualiza los lotes disponibles según la sucursal seleccionada"""
@@ -1486,7 +1524,7 @@ class RegistroApp:
         # Calcular filas
         total_por_sucursal = {s: 0.0 for s in SUCURSALES}
         total_gramos_global = 0.0
-        for var in all_variedades:
+        for idx, var in enumerate(all_variedades):
             row_vals = [var]
             total_var = 0.0
             for s in SUCURSALES:
@@ -1508,85 +1546,40 @@ class RegistroApp:
             libras = total_var / 453.59237
             row_vals.append(f"{total_var:.2f}")
             row_vals.append(f"{libras:.4f}")
-            self.tree_inventario.insert("", "end", values=row_vals)
+            # Alternar tags para simular líneas entre filas (fondo sutil alternado)
+            tag = 'even' if idx % 2 == 0 else 'odd'
+            self.tree_inventario.insert("", "end", values=row_vals, tags=(tag,))
 
-        # Fila de totales
+        # Fila de totales (destacada)
         total_row = ["TOTAL"]
         for s in SUCURSALES:
             total_row.append(f"{total_por_sucursal[s]:.2f}")
         total_row.append(f"{total_gramos_global:.2f}")
         total_row.append(f"{(total_gramos_global/453.59237):.4f}")
-        self.tree_inventario.insert("", "end", values=total_row)
+        self.tree_inventario.insert("", "end", values=total_row, tags=("total",))
 
     def exportar_inventario_csv(self):
-        """Exporta el inventario mostrado a CSV"""
-        if not os.path.exists(CSV_FILE):
-            messagebox.showerror("Error", "No hay datos registrados.")
+        """Exporta solo el contenido mostrado en la pestaña 'Inventario Total' a CSV."""
+        if not hasattr(self, 'tree_inventario') or not self.tree_inventario.get_children():
+            messagebox.showinfo("Info", "No hay datos en Inventario para exportar.")
             return
-        # Recalcular para garantizar consistencia
-        df = pd.read_csv(CSV_FILE)
-        for col in ["variedad", "sucursal"]:
-            if col in df.columns:
-                df[col] = df[col].astype(str).str.strip()
-        df["gramos"] = pd.to_numeric(df.get("gramos", 0), errors="coerce").fillna(0)
-        if "tipo" in df.columns:
-            entradas = df[df["tipo"].str.lower() == "entrada"].copy()
-            salidas = df[df["tipo"].str.lower() == "salida"].copy()
-        else:
-            entradas = df.copy()
-            salidas = df.iloc[0:0]
-        entradas_sum = entradas.groupby(["variedad", "sucursal"]) ["gramos"].sum().unstack(fill_value=0)
-        salidas_sum = salidas.groupby(["variedad", "sucursal"]) ["gramos"].sum().abs().unstack(fill_value=0)
-        all_variedades = sorted(set(list(VARIEDADES) + list(df["variedad"].dropna().unique())))
-
-        # Construir dataframe de salida
-        rows = []
-        total_por_sucursal = {s: 0.0 for s in SUCURSALES}
-        total_gramos_global = 0.0
-        for var in all_variedades:
-            fila = {"variedad": var}
-            total_var = 0.0
-            for s in SUCURSALES:
-                try:
-                    e = float(entradas_sum.at[var, s]) if (var in entradas_sum.index and s in entradas_sum.columns) else float(0)
-                except Exception:
-                    e = 0.0
-                try:
-                    sal = float(salidas_sum.at[var, s]) if (var in salidas_sum.index and s in salidas_sum.columns) else float(0)
-                except Exception:
-                    sal = 0.0
-                net = e - sal
-                fila[s] = net
-                total_por_sucursal[s] += net
-                total_var += net
-            fila["total_gramos"] = total_var
-            fila["total_libras"] = total_var / 453.59237
-            total_gramos_global += total_var
-            rows.append(fila)
-        # Agregar fila de totales
-        tot_fila = {"variedad": "TOTAL"}
-        for s in SUCURSALES:
-            tot_fila[s] = total_por_sucursal[s]
-        tot_fila["total_gramos"] = total_gramos_global
-        tot_fila["total_libras"] = total_gramos_global / 453.59237
-        rows.append(tot_fila)
-
         from tkinter import filedialog
         carpeta_registros = os.path.join(BASE_PATH, "registros")
         if not os.path.exists(carpeta_registros):
             os.makedirs(carpeta_registros)
         nombre_defecto = os.path.join(carpeta_registros, f"inventario_total_{datetime.now().strftime('%Y%m%d')}.csv")
         archivo = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV", "*.csv")], title="Guardar Inventario", initialdir=carpeta_registros, initialfile=nombre_defecto)
-        if archivo:
-            # Escribir CSV
-            import csv as _csv
-            with open(archivo, "w", encoding="utf-8", newline="") as f:
-                writer = _csv.writer(f)
-                header = ["variedad"] + SUCURSALES + ["total_gramos", "total_libras"]
-                writer.writerow(header)
-                for fila in rows:
-                    writer.writerow([fila.get(h, "") for h in header])
-            messagebox.showinfo("Éxito", f"Inventario exportado a {archivo}")
+        if not archivo:
+            return
+        import csv as _csv
+        with open(archivo, "w", encoding="utf-8", newline="") as f:
+            writer = _csv.writer(f)
+            header = [self.tree_inventario.heading(c)['text'] for c in self.tree_inventario['columns']]
+            writer.writerow(header)
+            for item in self.tree_inventario.get_children():
+                vals = self.tree_inventario.item(item, 'values')
+                writer.writerow(vals)
+        messagebox.showinfo("Éxito", f"Inventario exportado a {archivo}")
 
     def archivar_corte(self):
         """Exporta los registros del corte a un archivo histórico (sin eliminar del principal)"""
