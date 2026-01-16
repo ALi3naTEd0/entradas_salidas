@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tksheet import Sheet
 from tkcalendar import DateEntry
 import csv
 import os
@@ -1201,54 +1202,34 @@ class RegistroApp:
         ttk.Button(btn_frame_inv, text="Refrescar", command=self.mostrar_inventario_total).pack(side="left", padx=5)
         ttk.Button(btn_frame_inv, text="Exportar CSV", command=self.exportar_inventario_csv).pack(side="left", padx=5)
 
+
         cols = ["variedad"] + SUCURSALES + ["total_gramos", "total_libras"]
         style = ttk.Style()
-        # Estilo base para dar aspecto limpio y permitir customizaciones
-        style.configure("Inventory.Treeview", background="white", fieldbackground="white", rowheight=22)
+        style.configure("Inventory.Treeview", background="white", fieldbackground="white", rowheight=22, bordercolor="#cccccc", borderwidth=1, relief="solid")
         style.map("Inventory.Treeview", background=[('selected', '#bfe6ff')])
+        style.configure("Inventory.Treeview.Heading", bordercolor="#cccccc", borderwidth=1, relief="solid", font=("Arial", 10, "bold"), anchor="center")
         self.tree_inventario = ttk.Treeview(inventario_frame, columns=cols, show="headings", height=14, style="Inventory.Treeview")
         for c in cols:
             heading = c.upper() if c not in SUCURSALES else c
             self.tree_inventario.heading(c, text=heading.replace("_", " "))
-            if c == "variedad":
-                self.tree_inventario.column(c, width=200)
-            else:
-                self.tree_inventario.column(c, width=100, anchor="e")
-        # Configurar tags para alternar color de filas y resaltar TOTAL
+            anchor = "center" if c != "variedad" else "w"
+            width = 200 if c == "variedad" else 100
+            self.tree_inventario.column(c, width=width, anchor=anchor)
         self.tree_inventario.tag_configure('odd', background='#ffffff')
         self.tree_inventario.tag_configure('even', background='#f6f6f6')
         try:
-            # Intentar aplicar fuente en la fila TOTAL (algunos temas pueden ignorarlo)
             self.tree_inventario.tag_configure('total', background='#dfeefc', font=('TkDefaultFont', 10, 'bold'))
         except Exception:
             self.tree_inventario.tag_configure('total', background='#dfeefc')
-
         self.tree_inventario.grid(row=2, column=0, columnspan=6, sticky="nsew")
         inv_scroll = ttk.Scrollbar(inventario_frame, orient="vertical", command=self.tree_inventario.yview)
         inv_scroll.grid(row=2, column=6, sticky="ns")
         self.tree_inventario.configure(yscrollcommand=inv_scroll.set)
-        # Cargar inventario inicialmente para que se muestre sin necesidad de pulsar Refrescar
-        try:
-            self.mostrar_inventario_total()
-        except Exception:
-            pass
         inventario_frame.grid_rowconfigure(2, weight=1)
         inventario_frame.grid_columnconfigure(5, weight=1)
 
-        # Estilos: alternate row backgrounds to simulate grid lines y destacar totales en negrita
-        style = ttk.Style()
-        try:
-            style.theme_use(style.theme_use())
-        except Exception:
-            pass
-        style.configure("Treeview", rowheight=20, font=("Arial", 10))
-        style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
-        # Definir tags para filas (parecido a líneas semi-transparentes entre filas usando fondos sutiles)
-        self.tree_inventario.tag_configure('odd', background='#ffffff')
-        self.tree_inventario.tag_configure('even', background='#f6f8fa')
-        self.tree_inventario.tag_configure('total', background='#dfeff7', font=("Arial", 10, "bold"))
-        # Asegurar que la fila seleccionada sea visible con contraste
-        style.map('Treeview', background=[('selected', '#bcd4ff')], foreground=[('selected', 'black')])
+        # Cargar datos en la hoja (Sheet) al mostrar inventario
+        # Ya no se usa Sheet ni cargar_inventario_en_sheet; la carga se hace en mostrar_inventario_total
 
     def actualizar_lotes_corte(self, event=None):
         """Actualiza los lotes disponibles según la sucursal seleccionada"""
@@ -1493,7 +1474,7 @@ class RegistroApp:
             messagebox.showinfo("Éxito", f"Corte exportado a {archivo}")
 
     def mostrar_inventario_total(self):
-        """Calcula y muestra el inventario neto (Entradas - Salidas) por variedad y sucursal."""
+        """Calcula y muestra el inventario neto (Entradas - Salidas) por variedad y sucursal en la hoja tksheet."""
         if not os.path.exists(CSV_FILE):
             messagebox.showerror("Error", "No hay datos registrados.")
             return
@@ -1517,19 +1498,14 @@ class RegistroApp:
         # Asegurar que todas las variedades conocidas estén presentes
         all_variedades = sorted(set(list(VARIEDADES) + list(df["variedad"].dropna().unique())))
 
-        # Limpiar tree
-        for r in self.tree_inventario.get_children():
-            self.tree_inventario.delete(r)
-
-        # Calcular filas
+        # Calcular filas para la hoja
         total_por_sucursal = {s: 0.0 for s in SUCURSALES}
         total_gramos_global = 0.0
+        sheet_rows = []
         for idx, var in enumerate(all_variedades):
             row_vals = [var]
             total_var = 0.0
             for s in SUCURSALES:
-                e = float(entradas_sum.get(s, {}).get(var, 0)) if hasattr(entradas_sum, 'get') else 0
-                # entradas_sum is a DataFrame, access via .get for safety
                 try:
                     e = float(entradas_sum.at[var, s]) if (var in entradas_sum.index and s in entradas_sum.columns) else float(0)
                 except Exception:
@@ -1546,9 +1522,7 @@ class RegistroApp:
             libras = total_var / 453.59237
             row_vals.append(f"{total_var:.2f}")
             row_vals.append(f"{libras:.4f}")
-            # Alternar tags para simular líneas entre filas (fondo sutil alternado)
-            tag = 'even' if idx % 2 == 0 else 'odd'
-            self.tree_inventario.insert("", "end", values=row_vals, tags=(tag,))
+            sheet_rows.append(row_vals)
 
         # Fila de totales (destacada)
         total_row = ["TOTAL"]
@@ -1556,7 +1530,17 @@ class RegistroApp:
             total_row.append(f"{total_por_sucursal[s]:.2f}")
         total_row.append(f"{total_gramos_global:.2f}")
         total_row.append(f"{(total_gramos_global/453.59237):.4f}")
-        self.tree_inventario.insert("", "end", values=total_row, tags=("total",))
+        sheet_rows.append(total_row)
+
+        # Mostrar en tksheet
+        if hasattr(self, 'tree_inventario'):
+            for r in self.tree_inventario.get_children():
+                self.tree_inventario.delete(r)
+            for idx, row_vals in enumerate(sheet_rows[:-1]):
+                tag = 'even' if idx % 2 == 0 else 'odd'
+                self.tree_inventario.insert("", "end", values=row_vals, tags=(tag,))
+            # Fila de totales
+            self.tree_inventario.insert("", "end", values=sheet_rows[-1], tags=("total",))
 
     def exportar_inventario_csv(self):
         """Exporta solo el contenido mostrado en la pestaña 'Inventario Total' a CSV."""
