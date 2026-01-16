@@ -1206,7 +1206,7 @@ class RegistroApp:
         cols = ["variedad"] + SUCURSALES + ["total_gramos", "total_libras"]
         style = ttk.Style()
         style.configure("Inventory.Treeview", background="white", fieldbackground="white", rowheight=22, bordercolor="#cccccc", borderwidth=1, relief="solid")
-        style.map("Inventory.Treeview", background=[('selected', '#bfe6ff')])
+        style.map("Inventory.Treeview", background=[('selected', '#bfe6ff')], foreground=[('selected', 'black')])
         style.configure("Inventory.Treeview.Heading", bordercolor="#cccccc", borderwidth=1, relief="solid", font=("Arial", 10, "bold"), anchor="center")
         self.tree_inventario = ttk.Treeview(inventario_frame, columns=cols, show="headings", height=14, style="Inventory.Treeview")
         for c in cols:
@@ -1215,8 +1215,8 @@ class RegistroApp:
             anchor = "center" if c != "variedad" else "w"
             width = 200 if c == "variedad" else 100
             self.tree_inventario.column(c, width=width, anchor=anchor)
-        self.tree_inventario.tag_configure('odd', background='#ffffff')
-        self.tree_inventario.tag_configure('even', background='#f6f6f6')
+        self.tree_inventario.tag_configure('odd', background='#e0e0e0')
+        self.tree_inventario.tag_configure('even', background='#cccccc')
         try:
             self.tree_inventario.tag_configure('total', background='#dfeefc', font=('TkDefaultFont', 10, 'bold'))
         except Exception:
