@@ -202,7 +202,7 @@ VARIEDADES = [
     "MIX", "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
-COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR"]
+COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR", "JCK"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
 CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "maceta", "variedad_mix", "cliente", "no_aplicacion"]
@@ -570,7 +570,7 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
-        VERSION = "v1.0.4"
+        VERSION = "v1.0.5"
         
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
@@ -1077,17 +1077,7 @@ class RegistroApp:
         tab_control.add(graficos_frame, text="Gráficos Generales")
 
         # Filtros de fecha
-        ttk.Label(graficos_frame, text="Fecha desde:").grid(row=0, column=0, sticky="e")
-        self.filtro_fecha_desde = DateEntry(graficos_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
-        self.filtro_fecha_desde.grid(row=0, column=1, padx=5, pady=2)
-        self.filtro_fecha_desde.delete(0, "end")  # Dejar vacío por defecto
-
-        ttk.Label(graficos_frame, text="Fecha hasta:").grid(row=0, column=2, sticky="e")
-        self.filtro_fecha_hasta = DateEntry(graficos_frame, date_pattern='yyyy-mm-dd', width=12, locale='es_ES')
-        self.filtro_fecha_hasta.grid(row=0, column=3, padx=5, pady=2)
-        self.filtro_fecha_hasta.delete(0, "end")  # Dejar vacío por defecto
-
-        # Filtros generales
+        # Filtros generales (sin fechas)
         ttk.Label(graficos_frame, text="Variedad:").grid(row=1, column=0, sticky="e")
         self.filtro_g_variedad = ttk.Combobox(graficos_frame, values=["Todas"] + VARIEDADES, state="readonly")
         self.filtro_g_variedad.grid(row=1, column=1, padx=5, pady=2)
@@ -1707,21 +1697,7 @@ class RegistroApp:
             df["gramos"] = pd.to_numeric(df["gramos"], errors="coerce")
             df = df.dropna(subset=["gramos"])
         
-        # Filtrar por fecha
-        fecha_desde = self.filtro_fecha_desde.get().strip()
-        fecha_hasta = self.filtro_fecha_hasta.get().strip()
-        if fecha_desde or fecha_hasta:
-            df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
-            if fecha_desde:
-                try:
-                    df = df[df["fecha"] >= pd.to_datetime(fecha_desde)]
-                except:
-                    pass
-            if fecha_hasta:
-                try:
-                    df = df[df["fecha"] <= pd.to_datetime(fecha_hasta)]
-                except:
-                    pass
+        # Ya no se filtra por fecha en gráficos generales
         
         # Aplicar filtros
         filtros = {
