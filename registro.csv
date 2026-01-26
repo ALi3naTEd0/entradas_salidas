@@ -344,3 +344,4 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-01-24,BANANA LATTE,,-36,0,DRE,RP,L3 - RP,mix,,,,,Salida
 2026-01-24,MIX,,36,0,DRE,RP,L3 - RP,mix,,BANANA LATTE,,,Entrada
 2026-01-24,WEDDING CAKE,,-38,0,DRE,RP,L3 - RP,mix,,,,,Salida
+2026-01-24,MIX,,38,0,DRE,RP,L3 - RP,mix,,WEDDING CAKE,,,Entrada
