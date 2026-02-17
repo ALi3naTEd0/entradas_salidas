@@ -393,15 +393,15 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-01-28,ORANGEL,KEF,23,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,KEF,20,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,KEF,47,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
-2026-01-28,AK-47,KEF,18,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
+2026-01-28,AK-47,JCK,18,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,JCK,32,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,JCK,15,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
-2026-01-28,AK-47,JCK,38,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
+2026-01-28,AK-47,AX,38,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,AX,28,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,JP,27,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,NRQ,18,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,NRQ,32,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
-2026-01-28,AK-47,NRQ,156,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
+2026-01-28,AK-47,NRQ,16,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-28,AK-47,JP,32,1,DRE,FSM,L3 - FSM,trim,,,,,Entrada
 2026-01-29,WEDDING CAKE,,-9,0,DRE,SMB,L2 - SMB,venta,,,Evento Cata,,Salida
 2026-01-29,MOZZARELLA,,-7,0,DRE,SMB,L2 - SMB,venta,,,Evento Cata,,Salida
@@ -482,18 +482,18 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-02-10,AK-47,KEF,44,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
 2026-02-10,MOZZARELLA,KEF,67,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
 2026-02-10,WEDDING CAKE,JCK,61,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
-2026-02-12,MOZZARELLA,NRQ,66,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
-2026-02-12,MICHAEL JORDAN,KEF,32,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
-2026-02-10,KANDY KUSH,KEF,36,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
-2026-02-10,KANDY KUSH,KEF,44,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
-2026-02-12,MICHAEL JORDAN,KEF,48,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
-2026-02-10,BANANA LATTE,KEF,64,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
-2026-02-10,BANANA LATTE,KEF,57,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
-2026-02-10,BANANA LATTE,KEF,50,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
+2026-02-10,MOZZARELLA,NRQ,66,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
+2026-02-11,MICHAEL JORDAN,KEF,32,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
+2026-02-11,KANDY KUSH,KEF,36,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
+2026-02-11,KANDY KUSH,KEF,44,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
+2026-02-11,MICHAEL JORDAN,KEF,48,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
+2026-02-11,BANANA LATTE,KEF,64,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
+2026-02-11,BANANA LATTE,KEF,57,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
+2026-02-11,BANANA LATTE,KEF,50,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
 2026-02-11,MICHAEL JORDAN,JCK,48,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
 2026-02-11,RED RED WINE,JCK,64,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
 2026-02-11,MOZZARELLA,JCK,72,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
-2026-02-12,BANANA LATTE,JCK,81,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
+2026-02-11,BANANA LATTE,JCK,81,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
 2026-02-11,RED RED WINE,NRQ,49,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
 2026-02-11,WEDDING CAKE,NRQ,41,1,DRE,SMB,L3 - SMB,trim,Maceta chica,,,,Entrada
 2026-02-12,BANANA LATTE,NRQ,66,1,DRE,SMB,L3 - SMB,trim,Maceta grande,,,,Entrada
