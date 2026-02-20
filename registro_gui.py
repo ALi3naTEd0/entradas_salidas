@@ -92,32 +92,37 @@ def escribir_repo(contenido):
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 archivo_sha = response.json()["sha"]
-        
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{REPO_FILENAME}"
         headers = {
             "Authorization": f"token {GITHUB_TOKEN}",
             "Accept": "application/vnd.github.v3+json"
         }
-        
         # Codificar contenido en base64
         contenido_b64 = base64.b64encode(contenido.encode("utf-8")).decode("utf-8")
-        
         data = {
             "message": f"Actualización registro {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             "content": contenido_b64,
         }
-        
         if archivo_sha:
             data["sha"] = archivo_sha
-        
         response = requests.put(url, headers=headers, json=data, timeout=10)
+        print("GitHub PUT response:", response.status_code)
+        print("GitHub PUT response text:", response.text)
         response.raise_for_status()
-        
         # Actualizar SHA con el nuevo
         archivo_sha = response.json()["content"]["sha"]
         return True
     except Exception as e:
-        print(f"Error escribiendo repo: {e}")
+        import tkinter.messagebox as mbox
+        error_msg = f"Error escribiendo repo: {e}\n\n"
+        if 'response' in locals():
+            error_msg += f"Código: {getattr(response, 'status_code', 'N/A')}\n"
+            try:
+                error_msg += f"Respuesta: {response.text}\n"
+            except Exception:
+                pass
+        mbox.showerror("Error de sincronización GitHub", error_msg)
+        print(error_msg)
         return False
 
 def sincronizar_desde_gist():
@@ -171,29 +176,42 @@ def sincronizar_a_gist():
         # Mantener todos los registros remotos en su orden original (preserva duplicados válidos)
         registros_remotos = lineas_remotas[1:] if len(lineas_remotas) > 1 else []
 
-        # Crear un conjunto de registros remotos para verificar cuáles son nuevos
-        registros_remotos_set = set(registros_remotos)
-
-        # Agregar solo los registros locales que NO existen en el remoto (al final)
-        registros_nuevos = []
-        for linea in lineas_locales[1:]:
-            if linea and linea not in registros_remotos_set:
-                registros_nuevos.append(linea)
+        # Agregar todos los registros locales al final, sin filtrar duplicados
+        registros_nuevos = [linea for linea in lineas_locales[1:] if linea]
 
         # Combinar: remoto (preservado) + nuevos locales (al final)
         todos_registros = registros_remotos + registros_nuevos
 
         contenido_merged = encabezado + "\n" + "\n".join(todos_registros) + "\n"
 
-        # Guardar localmente el merge, asegurando un salto de línea por registro
-        with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
-            f.write(contenido_merged)
+        # Validar que el CSV no esté vacío ni solo tenga encabezado
+        if not todos_registros:
+            import tkinter.messagebox as mbox
+            mbox.showerror("Error de sincronización", "No se puede sincronizar: el CSV está vacío o solo tiene encabezado.")
+            return False
 
-        return escribir_repo(contenido_merged)
+        # Sincronizar primero con GitHub
+        if escribir_repo(contenido_merged):
+            # Solo actualizar el archivo local si la sincronización fue exitosa
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                f.write(contenido_merged)
+            return True
+        else:
+            return False
     else:
         # Si no hay versión remota, subir la local
         contenido_local = "\n".join(lineas_locales) + "\n"
-        return escribir_repo(contenido_local)
+        # Validar que el CSV no esté vacío ni solo tenga encabezado
+        if len(lineas_locales) <= 1:
+            import tkinter.messagebox as mbox
+            mbox.showerror("Error de sincronización", "No se puede sincronizar: el CSV está vacío o solo tiene encabezado.")
+            return False
+        if escribir_repo(contenido_local):
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                f.write(contenido_local)
+            return True
+        else:
+            return False
 
 # Listas de opciones
 VARIEDADES = [
@@ -487,9 +505,9 @@ class RegistroApp:
             # Sincronizar a GitHub Gist
             if sincronizar_a_gist():
                 messagebox.showinfo("Éxito", "Cambios guardados y sincronizados correctamente.")
+                editor.destroy()
             else:
-                messagebox.showwarning("Advertencia", "Cambios guardados localmente, pero no se pudo sincronizar con la nube.")
-            editor.destroy()
+                messagebox.showerror("Error de sincronización", "No se pudo guardar el registro en GitHub.\n\nVerifica tu conexión, token o permisos.")
 
         def exportar_pdf():
             try:
@@ -570,7 +588,7 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
-        VERSION = "v1.0.5"
+        VERSION = "v1.0.6"
         
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
@@ -850,9 +868,9 @@ class RegistroApp:
             # Sincronizar a GitHub Gist
             if sincronizar_a_gist():
                 messagebox.showinfo("Éxito", "Registro guardado y sincronizado correctamente.")
+                self.limpiar_campos()
             else:
-                messagebox.showwarning("Advertencia", "Registro guardado localmente, pero no se pudo sincronizar con la nube.")
-            self.limpiar_campos()
+                messagebox.showerror("Error de sincronización", "No se pudo guardar el registro en GitHub.\n\nVerifica tu conexión, token o permisos.")
         except Exception as e:
             messagebox.showerror("Error al guardar", f"No se pudo guardar el registro en el archivo:\n{CSV_FILE}\n\nError: {e}\n\nVerifique permisos de escritura en la carpeta.")
 
