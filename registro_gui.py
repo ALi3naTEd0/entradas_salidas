@@ -159,59 +159,22 @@ def sincronizar_a_gist():
     if not os.path.exists(CSV_FILE):
         return False
 
-    # Leer datos locales, asegurando saltos de línea correctos
+    # Leer el archivo local completo
     with open(CSV_FILE, "r", encoding="utf-8") as f:
-        lineas_locales = [linea.rstrip('\r\n') for linea in f if linea.strip()]
+        contenido_local = f.read()
 
-    # Obtener versión más reciente del repo
-    contenido_remoto = leer_repo()
+    # Validar que el CSV no esté vacío ni solo tenga encabezado
+    lineas = [linea for linea in contenido_local.strip().split("\n") if linea.strip()]
+    if len(lineas) <= 1:
+        import tkinter.messagebox as mbox
+        mbox.showerror("Error de sincronización", "No se puede sincronizar: el CSV está vacío o solo tiene encabezado.")
+        return False
 
-    if contenido_remoto:
-        # Hacer merge: preservar orden del remoto y agregar nuevos registros locales al final
-        lineas_remotas = [linea.rstrip('\r\n') for linea in contenido_remoto.strip().split("\n") if linea.strip()]
-
-        # Primera línea es el encabezado
-        encabezado = lineas_locales[0] if lineas_locales else lineas_remotas[0]
-
-        # Mantener todos los registros remotos en su orden original (preserva duplicados válidos)
-        registros_remotos = lineas_remotas[1:] if len(lineas_remotas) > 1 else []
-
-        # Agregar todos los registros locales al final, sin filtrar duplicados
-        registros_nuevos = [linea for linea in lineas_locales[1:] if linea]
-
-        # Combinar: remoto (preservado) + nuevos locales (al final)
-        todos_registros = registros_remotos + registros_nuevos
-
-        contenido_merged = encabezado + "\n" + "\n".join(todos_registros) + "\n"
-
-        # Validar que el CSV no esté vacío ni solo tenga encabezado
-        if not todos_registros:
-            import tkinter.messagebox as mbox
-            mbox.showerror("Error de sincronización", "No se puede sincronizar: el CSV está vacío o solo tiene encabezado.")
-            return False
-
-        # Sincronizar primero con GitHub
-        if escribir_repo(contenido_merged):
-            # Solo actualizar el archivo local si la sincronización fue exitosa
-            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
-                f.write(contenido_merged)
-            return True
-        else:
-            return False
+    # Subir el archivo local tal como está
+    if escribir_repo(contenido_local):
+        return True
     else:
-        # Si no hay versión remota, subir la local
-        contenido_local = "\n".join(lineas_locales) + "\n"
-        # Validar que el CSV no esté vacío ni solo tenga encabezado
-        if len(lineas_locales) <= 1:
-            import tkinter.messagebox as mbox
-            mbox.showerror("Error de sincronización", "No se puede sincronizar: el CSV está vacío o solo tiene encabezado.")
-            return False
-        if escribir_repo(contenido_local):
-            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
-                f.write(contenido_local)
-            return True
-        else:
-            return False
+        return False
 
 # Listas de opciones
 VARIEDADES = [
@@ -814,58 +777,21 @@ class RegistroApp:
             else:
                 messagebox.showerror("Error", "El campo 'gramos' debe ser numérico.")
             return
-        # Escribir en CSV
-        archivo_nuevo = not os.path.exists(CSV_FILE)
-        # Si el archivo existe pero no tiene la columna 'variedad_mix', 'motivo' o 'cliente', rehacer encabezado y migrar filas
-        if not archivo_nuevo:
+        # Nuevo flujo: siempre trabajar sobre el CSV remoto más reciente
+        try:
+            # Descargar la última versión remota antes de guardar
+            if not sincronizar_desde_gist():
+                messagebox.showerror("Error de sincronización", "No se pudo descargar la última versión del registro desde GitHub.\n\nVerifica tu conexión, token o permisos.")
+                return
+            # Leer el archivo actualizado
             with open(CSV_FILE, 'r', encoding='utf-8') as f:
                 filas = list(csv.reader(f))
-            encabezado = filas[0] if filas else []
-            esperado = CAMPOS + ["tipo"]
-            # Si falta variedad_mix o el orden es incorrecto, migrar
-            if encabezado != esperado:
-                nuevas_filas = []
-                for fila in filas[1:]:
-                    fila_dict = dict(zip(encabezado, fila))
-                    nueva = [
-                        fila_dict.get("fecha", ""),
-                        fila_dict.get("variedad", ""),
-                        fila_dict.get("colaborador", ""),
-                        fila_dict.get("gramos", ""),
-                        fila_dict.get("plantas", "0"),
-                        fila_dict.get("supervisor", ""),
-                        fila_dict.get("sucursal", ""),
-                        fila_dict.get("lote", ""),
-                        fila_dict.get("motivo", ""),
-                        fila_dict.get("maceta", ""),
-                        fila_dict.get("variedad_mix", ""),
-                        fila_dict.get("cliente", fila_dict.get("quien", "")),
-                        fila_dict.get("no_aplicacion", ""),
-                        fila_dict.get("tipo", "Entrada")
-                    ]
-                    nuevas_filas.append(nueva)
-                with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(esperado)
-                    for fila in nuevas_filas:
-                        writer.writerow(fila)
-        # Ahora sí, agregar el nuevo registro
-        try:
-            # Antes de abrir en append, asegurarse de que el archivo termina en salto de línea
-            if os.path.exists(CSV_FILE):
-                with open(CSV_FILE, 'rb+') as f:
-                    f.seek(0, 2)
-                    if f.tell() > 0:
-                        f.seek(-1, 2)
-                        last_char = f.read(1)
-                        if last_char != b'\n':
-                            f.write(b'\n')
+            encabezado = filas[0] if filas else CAMPOS + ["tipo"]
+            # Siempre agregar el nuevo registro, aunque sea idéntico a uno anterior
             with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                if archivo_nuevo:
-                    writer.writerow(CAMPOS + ["tipo"])
                 writer.writerow(datos)
-            # Sincronizar a GitHub Gist
+            # Subir el archivo actualizado
             if sincronizar_a_gist():
                 messagebox.showinfo("Éxito", "Registro guardado y sincronizado correctamente.")
                 self.limpiar_campos()
