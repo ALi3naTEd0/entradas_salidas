@@ -183,7 +183,7 @@ VARIEDADES = [
     "MIX", "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
-COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR", "JCK"]
+COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR", "JCK", "JSL"]
 SUPERVISORES = ["DRE", "RAB", "JP"]
 
 CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "maceta", "variedad_mix", "cliente", "no_aplicacion"]
@@ -877,6 +877,15 @@ class RegistroApp:
 
         # Botón Guardar (la posición se ajusta dinámicamente)
         self.btn_guardar = ttk.Button(frame, text="Guardar Registro", command=self.guardar_registro)
+
+        # ENTER para cambiar de campo
+        campos_tab = [self.fecha, self.variedad, self.tipo_movimiento, self.colaborador,
+                      self.supervisor, self.gramos, self.plantas, self.sucursal,
+                      self.lote, self.motivo, self.motivo2, self.maceta, self.cliente]
+        for i, widget in enumerate(campos_tab):
+            next_widget = campos_tab[i + 1] if i + 1 < len(campos_tab) else self.btn_guardar
+            widget.bind("<Return>", lambda e, nw=next_widget: nw.focus_set())
+        self.btn_guardar.bind("<Return>", lambda e: self.guardar_registro())
 
         # Mostrar/ocultar campos según tipo y motivo
         def on_tipo_change(event=None):
@@ -1896,6 +1905,7 @@ class RegistroApp:
         self.sucursal.set("")
         self.motivo.set("")
         self.motivo2.set("")
+        self.maceta.set("")
         self.cliente.delete(0, "end")
         self.no_aplicacion.delete(0, "end")
         # Solo actualiza la fecha si es necesario, y de forma segura
