@@ -720,7 +720,9 @@ class RegistroApp:
         cliente = self.cliente.get() if (tipo == "Salida" and motivo_val == "venta") else ""
         # Maceta solo aplica para Entradas con motivo 'trim'
         maceta_val = self.maceta.get() if (tipo == "Entrada" and motivo_val == "trim") else ""
+        es_traslado = (motivo_val == "traslado")
         gramos_val = self.gramos.get()
+        gramos_str = gramos_val  # respaldo si no es numérico (la validación lo atrapa)
         try:
             gramos_float = float(gramos_val)
             # Formatear sin decimales si es entero (p.ej. '0' en lugar de '0.0')
@@ -737,6 +739,40 @@ class RegistroApp:
         except Exception:
             pass  # Si no es numerico, se guarda como está y la validación lo atrapará después
         no_aplicacion_val = ""  # Se edita desde Filtrar registro
+        # Traslado: un solo formulario genera DOS registros (Salida en origen + Entrada en destino).
+        # La sucursal/lote de arriba es el ORIGEN; los campos de destino son el destino.
+        if es_traslado:
+            origen_sucursal = self.sucursal.get()
+            origen_lote = self.lote.get()
+            destino_sucursal_val = self.destino_sucursal.get()
+            destino_lote_val = self.destino_lote.get()
+            # Validaciones propias del traslado
+            faltantes = [self.fecha.get(), self.variedad.get(), self.gramos.get(), self.supervisor.get(),
+                         origen_sucursal, origen_lote, destino_sucursal_val, destino_lote_val]
+            if any(v is None or str(v).strip() == "" for v in faltantes):
+                messagebox.showerror("Error", "Traslado: completa variedad, gramos, supervisor y origen/destino (sucursal y lote).")
+                return
+            try:
+                float(self.gramos.get())
+            except ValueError:
+                messagebox.showerror("Error", "El campo 'gramos' debe ser numérico.")
+                return
+            if origen_sucursal == destino_sucursal_val and origen_lote == destino_lote_val:
+                messagebox.showerror("Error", "El origen y el destino no pueden ser el mismo lote.")
+                return
+            fila_salida = [
+                self.fecha.get(), self.variedad.get(), "", "-" + gramos_str, "0",
+                self.supervisor.get(), origen_sucursal, origen_lote, "traslado",
+                "", variedad_mix_val, "", no_aplicacion_val, "Salida"
+            ]
+            fila_entrada = [
+                self.fecha.get(), self.variedad.get(), "", gramos_str, "0",
+                self.supervisor.get(), destino_sucursal_val, destino_lote_val, "traslado",
+                "", variedad_mix_val, "", no_aplicacion_val, "Entrada"
+            ]
+            self._escribir_filas([fila_salida, fila_entrada],
+                                 "Traslado guardado y sincronizado (Salida en origen + Entrada en destino).")
+            return
         datos = [
             self.fecha.get(),
             self.variedad.get(),
@@ -777,23 +813,24 @@ class RegistroApp:
             else:
                 messagebox.showerror("Error", "El campo 'gramos' debe ser numérico.")
             return
+        self._escribir_filas([datos], "Registro guardado y sincronizado correctamente.")
+
+    def _escribir_filas(self, filas_nuevas, mensaje_exito):
+        """Sincroniza el CSV remoto, agrega una o varias filas y vuelve a subir."""
         # Nuevo flujo: siempre trabajar sobre el CSV remoto más reciente
         try:
             # Descargar la última versión remota antes de guardar
             if not sincronizar_desde_gist():
                 messagebox.showerror("Error de sincronización", "No se pudo descargar la última versión del registro desde GitHub.\n\nVerifica tu conexión, token o permisos.")
                 return
-            # Leer el archivo actualizado
-            with open(CSV_FILE, 'r', encoding='utf-8') as f:
-                filas = list(csv.reader(f))
-            encabezado = filas[0] if filas else CAMPOS + ["tipo"]
-            # Siempre agregar el nuevo registro, aunque sea idéntico a uno anterior
+            # Agregar los nuevos registros, aunque sean idénticos a otros anteriores
             with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(datos)
+                for fila in filas_nuevas:
+                    writer.writerow(fila)
             # Subir el archivo actualizado
             if sincronizar_a_gist():
-                messagebox.showinfo("Éxito", "Registro guardado y sincronizado correctamente.")
+                messagebox.showinfo("Éxito", mensaje_exito)
                 self.limpiar_campos()
             else:
                 messagebox.showerror("Error de sincronización", "No se pudo guardar el registro en GitHub.\n\nVerifica tu conexión, token o permisos.")
@@ -861,7 +898,7 @@ class RegistroApp:
         self.colaborador.set("")
         self.supervisor.set("")
         self.gramos.set("")
-        self.plantas.set("0")
+        self.plantas.set("1")
 
         # Sucursal (la posición se ajusta dinámicamente)
         self.sucursal_label = ttk.Label(frame, text="Sucursal:")
@@ -875,6 +912,16 @@ class RegistroApp:
         self.lote.set("")
         self.lote['values'] = []
 
+        # Destino (solo visible cuando motivo == 'traslado'; sucursal/lote de arriba = origen)
+        self.label_destino_sucursal = ttk.Label(frame, text="Destino Sucursal:")
+        self.destino_sucursal = ttk.Combobox(frame, values=SUCURSALES, state="readonly")
+        self.destino_sucursal.set("")
+        self.destino_sucursal.bind("<<ComboboxSelected>>", self.actualizar_lotes_destino)
+        self.label_destino_lote = ttk.Label(frame, text="Destino Lote:")
+        self.destino_lote = ttk.Combobox(frame, state="readonly")
+        self.destino_lote.set("")
+        self.destino_lote['values'] = []
+
         # Botón Guardar (la posición se ajusta dinámicamente)
         self.btn_guardar = ttk.Button(frame, text="Guardar Registro", command=self.guardar_registro)
 
@@ -885,6 +932,9 @@ class RegistroApp:
         for i, widget in enumerate(campos_tab):
             next_widget = campos_tab[i + 1] if i + 1 < len(campos_tab) else self.btn_guardar
             widget.bind("<Return>", lambda e, nw=next_widget: nw.focus_set())
+        # Navegación con Enter para los campos de destino (solo visibles en traslado)
+        self.destino_sucursal.bind("<Return>", lambda e: self.destino_lote.focus_set())
+        self.destino_lote.bind("<Return>", lambda e: self.btn_guardar.focus_set())
         self.btn_guardar.bind("<Return>", lambda e: self.guardar_registro())
 
         # Mostrar/ocultar campos según tipo y motivo
@@ -946,6 +996,23 @@ class RegistroApp:
                             self.btn_guardar.grid(row=10, column=0, columnspan=2, pady=10)
                         else:
                             self.btn_guardar.grid(row=9, column=0, columnspan=2, pady=10)
+                # Traslado: sucursal/lote de arriba = ORIGEN; mostrar destino y bajar el botón.
+                # Se colocan en filas altas (las filas vacías intermedias colapsan en grid).
+                if motivo_check == "traslado":
+                    self.sucursal_label.config(text="Origen Sucursal:")
+                    self.label_lote.config(text="Origen Lote:")
+                    self.label_destino_sucursal.grid(row=20, column=0, sticky="e")
+                    self.destino_sucursal.grid(row=20, column=1, padx=5, pady=2)
+                    self.label_destino_lote.grid(row=21, column=0, sticky="e")
+                    self.destino_lote.grid(row=21, column=1, padx=5, pady=2)
+                    self.btn_guardar.grid(row=22, column=0, columnspan=2, pady=10)
+                else:
+                    self.sucursal_label.config(text="Sucursal:")
+                    self.label_lote.config(text="Lote:")
+                    self.label_destino_sucursal.grid_remove()
+                    self.destino_sucursal.grid_remove()
+                    self.label_destino_lote.grid_remove()
+                    self.destino_lote.grid_remove()
             if variedad == "MIX":
                 self.motivo2.bind("<<ComboboxSelected>>", on_motivo_change)
                 self.motivo.unbind("<<ComboboxSelected>>")
@@ -1634,6 +1701,14 @@ class RegistroApp:
             self.lote['values'] = []
         self.lote.set("")
 
+    def actualizar_lotes_destino(self, event=None):
+        sucursal = self.destino_sucursal.get()
+        if sucursal in self.lotes_por_sucursal:
+            self.destino_lote['values'] = self.lotes_por_sucursal[sucursal]
+        else:
+            self.destino_lote['values'] = []
+        self.destino_lote.set("")
+
     def mostrar_grafico_general_unico(self):
         if not os.path.exists(CSV_FILE):
             messagebox.showerror("Error", "No hay datos registrados.")
@@ -1898,7 +1973,7 @@ class RegistroApp:
     def limpiar_campos(self):
         self.colaborador.set("")
         self.gramos.set("")
-        self.plantas.set("0")
+        self.plantas.set("1")
         self.supervisor.set("")
         self.lote.set("")
         self.variedad.set("")
@@ -1908,6 +1983,12 @@ class RegistroApp:
         self.maceta.set("")
         self.cliente.delete(0, "end")
         self.no_aplicacion.delete(0, "end")
+        # Traslado: limpiar destino y restaurar etiquetas de origen -> sucursal/lote
+        self.destino_sucursal.set("")
+        self.destino_lote.set("")
+        self.destino_lote['values'] = []
+        self.sucursal_label.config(text="Sucursal:")
+        self.label_lote.config(text="Lote:")
         # Solo actualiza la fecha si es necesario, y de forma segura
         try:
             self.fecha.set_date(datetime.now().date())
