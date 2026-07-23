@@ -184,7 +184,7 @@ VARIEDADES = [
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
 COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR", "JCK", "JSL", "DAY"]
-SUPERVISORES = ["DRE", "RAB", "JP"]
+SUPERVISORES = ["DRE", "RAB", "JP", "LE"]
 
 CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "maceta", "variedad_mix", "cliente", "no_aplicacion"]
 
@@ -551,7 +551,7 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
-        VERSION = "v1.0.8"
+        VERSION = "v1.0.9"
         
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
@@ -926,15 +926,29 @@ class RegistroApp:
         self.btn_guardar = ttk.Button(frame, text="Guardar Registro", command=self.guardar_registro)
 
         # ENTER para cambiar de campo
+        # Orden lógico de campos (incluye destino para traslado). El Enter salta
+        # los que estén ocultos según tipo/motivo (p. ej. colaborador y plantas en Salida).
         campos_tab = [self.fecha, self.variedad, self.tipo_movimiento, self.colaborador,
                       self.supervisor, self.gramos, self.plantas, self.sucursal,
-                      self.lote, self.motivo, self.motivo2, self.maceta, self.cliente]
-        for i, widget in enumerate(campos_tab):
-            next_widget = campos_tab[i + 1] if i + 1 < len(campos_tab) else self.btn_guardar
-            widget.bind("<Return>", lambda e, nw=next_widget: nw.focus_set())
-        # Navegación con Enter para los campos de destino (solo visibles en traslado)
-        self.destino_sucursal.bind("<Return>", lambda e: self.destino_lote.focus_set())
-        self.destino_lote.bind("<Return>", lambda e: self.btn_guardar.focus_set())
+                      self.lote, self.motivo, self.motivo2, self.maceta, self.cliente,
+                      self.destino_sucursal, self.destino_lote]
+
+        def enfocar_siguiente(actual):
+            try:
+                idx = campos_tab.index(actual)
+            except ValueError:
+                idx = -1
+            for w in campos_tab[idx + 1:]:
+                try:
+                    if w.winfo_ismapped():
+                        w.focus_set()
+                        return
+                except Exception:
+                    pass
+            self.btn_guardar.focus_set()
+
+        for widget in campos_tab:
+            widget.bind("<Return>", lambda e, w=widget: enfocar_siguiente(w))
         self.btn_guardar.bind("<Return>", lambda e: self.guardar_registro())
 
         # Mostrar/ocultar campos según tipo y motivo
