@@ -1278,3 +1278,5 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-07-23,GRAN JEFA,,224,0,JP,SMB,L8 - SMB,traslado,,,,,Entrada
 2026-07-23,MIX,,-1194,0,LE,FSM,L8 - FSM,traslado,,,,,Salida
 2026-07-23,MIX,,1194,0,LE,SMB,L8 - SMB,traslado,,,,,Entrada
+2026-07-23,APPLE FRITTER,,-232,0,LE,FSM,L8 - FSM,traslado,,,,,Salida
+2026-07-23,APPLE FRITTER,,232,0,LE,SMB,L8 - SMB,traslado,,,,,Entrada
