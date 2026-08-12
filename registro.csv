@@ -1561,3 +1561,5 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-08-12,RUNTZ,,116,0,DRE,SMB,L5 - SMB,traslado,,,,,Entrada
 2026-08-12,ZALLAH BREAD,,-53,0,DRE,FSM,L7 - FSM,traslado,,,,,Salida
 2026-08-12,ZALLAH BREAD,,53,0,DRE,SMB,L7 - SMB,traslado,,,,,Entrada
+2026-08-12,SUGAR CANE,,-90,0,DRE,FSM,L7 - FSM,traslado,,,,,Salida
+2026-08-12,SUGAR CANE,,90,0,DRE,SMB,L7 - SMB,traslado,,,,,Entrada
