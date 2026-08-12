@@ -1563,3 +1563,5 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-08-12,ZALLAH BREAD,,53,0,DRE,SMB,L7 - SMB,traslado,,,,,Entrada
 2026-08-12,SUGAR CANE,,-90,0,DRE,FSM,L7 - FSM,traslado,,,,,Salida
 2026-08-12,SUGAR CANE,,90,0,DRE,SMB,L7 - SMB,traslado,,,,,Entrada
+2026-08-12,RED RED WINE,,-592,0,DRE,FSM,L3 - FSM,traslado,,,,,Salida
+2026-08-12,RED RED WINE,,592,0,DRE,SMB,L3 - SMB,traslado,,,,,Entrada
