@@ -183,8 +183,8 @@ VARIEDADES = [
     "MIX", "MOZZARELLA", "ORANGEL", "RECON", "RED RED WINE", "RUNTZ", "SUGAR CANE", "WEDDING CAKE", "ZALLAH BREAD"
 ]
 SUCURSALES = ["FSM", "SMB", "RP"]
-COLABORADORES = ["KEF", "CHCH", "LE", "AX", "JP", "NRQ", "JR", "JCK", "JSL", "DAY"]
-SUPERVISORES = ["DRE", "RAB", "JP", "LE"]
+COLABORADORES = ["KEF", "CHCH", "LE", "AX", "NRQ", "JR", "DCK", "KRN"]
+SUPERVISORES = ["DRE", "RAB", "LE"]
 
 CAMPOS = ["fecha", "variedad", "colaborador", "gramos", "plantas", "supervisor", "sucursal", "lote", "motivo", "maceta", "variedad_mix", "cliente", "no_aplicacion"]
 
