@@ -1738,3 +1738,179 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-08-19,ZALLAH BREAD,,-2,0,LE,SMB,L11 - SMB,venta,,,DRE,,Salida
 2026-08-19,MICHAEL JORDAN,,-225,0,LE,SMB,L9 - SMB,venta,,,ABUELO,,Salida
 2026-08-20,SUGAR CANE,,-225,0,DRE,SMB,L10 - SMB,venta,,,HECTOR,,Salida
+2026-08-25,BANANA LATTE,JR,22,1,LE,RP,L8 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,BANANA LATTE,JR,24,1,LE,RP,L8 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,BANANA LATTE,JR,29,1,LE,RP,L8 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,JR,25,1,LE,RP,L8 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,BANANA LATTE,JR,30,1,LE,RP,L8 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,DCK,25,1,LE,RP,L8 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,DCK,90,1,LE,RP,L8 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,DCK,24,1,LE,RP,L8 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,RUNTZ,DCK,25,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,RECON,KRN,36,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,RUNTZ,KRN,12,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-25,KING KUSH BREATH,KRN,29,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-25,RECON,KRN,33,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-26,KING KUSH BREATH,KRN,26,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-26,KING KUSH BREATH,KRN,19,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-26,RUNTZ,KRN,13,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-27,KING KUSH BREATH,DCK,4,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-27,RECON,DCK,11,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-27,BLACKBERRY HONEY,DCK,22,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-27,ZALLAH BREAD,DCK,40,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,KANDY KUSH,KRN,54,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,BLACKBERRY HONEY,KRN,25,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-28,ZALLAH BREAD,KRN,40,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,ZALLAH BREAD,KRN,35,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,BLACKBERRY HONEY,JR,16,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,ZALLAH BREAD,JR,24,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,KANDY KUSH,KRN,33,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-28,ZALLAH BREAD,DCK,40,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,ZALLAH BREAD,DCK,35,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,BLACKBERRY HONEY,DCK,11,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,KANDY KUSH,DCK,36,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,KANDY KUSH,KRN,28,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,APPLE FRITTER,DCK,18,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-08-28,MICHAEL JORDAN,JR,60,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-09-01,BLACKBERRY HONEY,DCK,56,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-09-01,ZALLAH BREAD,DCK,30,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-01,ZALLAH BREAD,JR,57,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-01,RECON,DCK,20,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-03,MICHAEL JORDAN,DCK,52,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-03,RUNTZ,DCK,42,1,LE,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-03,MICHAEL JORDAN,DCK,11,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-09-03,RUNTZ,JR,58,1,LE,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-08-14,BLACKBERRY HONEY,DCK,28,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,MICHAEL JORDAN,DCK,33,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-14,RUNTZ,JR,36,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,RUNTZ,JR,28,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,RUNTZ,DCK,30,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-14,MICHAEL JORDAN,DCK,25,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,MICHAEL JORDAN,DCK,25,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,BANANA LATTE,DCK,35,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,KING KUSH BREATH,DCK,39,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,RECON,DCK,30,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,RUNTZ,DCK,42,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-14,RECON,DCK,34,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,MICHAEL JORDAN,DCK,44,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-14,RUNTZ,DCK,58,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,39,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,23,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,39,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,BANANA LATTE,DCK,39,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,36,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,22,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,KANDY KUSH,DCK,90,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,ZALLAH BREAD,DCK,39,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,KANDY KUSH,DCK,23,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,ZALLAH BREAD,JR,31,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,BLACKBERRY HONEY,JR,25,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,ZALLAH BREAD,JR,40,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,KANDY KUSH,JR,12,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,BANANA LATTE,JR,20,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,BANANA LATTE,KRN,41,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,KANDY KUSH,KRN,29,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,BLACKBERRY HONEY,KRN,43,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,KRN,40,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,ZALLAH BREAD,KRN,37,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-18,BLACKBERRY HONEY,KRN,30,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-18,KANDY KUSH,KRN,29,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-20,BANANA LATTE,DCK,37,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-20,BANANA LATTE,JR,27,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-20,BANANA LATTE,DCK,34,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-20,KANDY KUSH,DCK,23,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-20,BANANA LATTE,JR,34,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-20,BANANA LATTE,JR,28,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-20,BANANA LATTE,DCK,37,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-25,KANDY KUSH,DCK,20,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-25,BANANA LATTE,KRN,40,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,KRN,40,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,KRN,24,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,KRN,31,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-25,BANANA LATTE,KRN,41,1,LE,SMB,L11 - SMB,trim,Maceta grande,,,,Entrada
+2026-08-25,KANDY KUSH,KRN,19,1,LE,SMB,L11 - SMB,trim,Maceta chica,,,,Entrada
+2026-08-19,RECON,JR,24,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,APPLE FRITTER,JR,12,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,APPLE FRITTER,JR,34,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,KANDY KUSH,JR,20,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,KING KUSH BREATH,JR,40,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,MICHAEL JORDAN,JR,50,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,BLACKBERRY HONEY,JR,17,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,MICHAEL JORDAN,JR,54,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,KANDY KUSH,KRN,36,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,RUNTZ,KRN,32,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,RUNTZ,KRN,120,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,BLACKBERRY HONEY,KRN,78,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,RECON,KRN,40,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,MICHAEL JORDAN,KRN,43,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,BLACKBERRY HONEY,DCK,38,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,SUGAR CANE,DCK,95,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,KING KUSH BREATH,DCK,51,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,RUNTZ,DCK,86,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-19,RECON,DCK,15,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-19,BLACKBERRY HONEY,DCK,31,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-18,KANDY KUSH,DCK,22,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-18,KANDY KUSH,DCK,17,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-18,MICHAEL JORDAN,DCK,54,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-18,RUNTZ,DCK,54,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-18,APPLE FRITTER,DCK,30,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-18,BLACKBERRY HONEY,DCK,44,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-18,MICHAEL JORDAN,DCK,50,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-18,APPLE FRITTER,DCK,28,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,APPLE FRITTER,DCK,69,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,21,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,20,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,29,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,32,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,46,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,42,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,26,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,JR,35,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,JR,24,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,ZALLAH BREAD,JR,40,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,JR,29,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,JR,75,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,APPLE FRITTER,JR,60,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,JR,34,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,ZALLAH BREAD,JR,84,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,DCK,103,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,DCK,23,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,ZALLAH BREAD,DCK,43,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,APPLE FRITTER,DCK,63,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,DCK,37,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,ZALLAH BREAD,DCK,45,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,MICHAEL JORDAN,KRN,43,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,ZALLAH BREAD,KRN,37,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,APPLE FRITTER,KRN,77,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,KRN,68,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-21,ZALLAH BREAD,KRN,32,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,APPLE FRITTER,JR,69,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-21,APPLE FRITTER,KRN,32,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,APPLE FRITTER,JR,50,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-24,BANANA LATTE,JR,76,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-24,APPLE FRITTER,JR,31,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-24,BANANA LATTE,DCK,29,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,DCK,28,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,DCK,23,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,DCK,32,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,DCK,53,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-26,BANANA LATTE,JR,17,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,JR,28,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,JR,38,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-08-26,BANANA LATTE,KRN,70,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-26,BANANA LATTE,KRN,69,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-26,BANANA LATTE,JR,61,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-26,BANANA LATTE,DCK,70,1,LE,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-08-26,BANANA LATTE,KRN,61,1,LE,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,BANANA LATTE,JR,68,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-09-02,BANANA LATTE,JR,71,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-09-02,BANANA LATTE,DCK,33,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,BANANA LATTE,DCK,76,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-09-02,BANANA LATTE,DCK,77,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-09-02,BANANA LATTE,DCK,57,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,BANANA LATTE,DCK,29,1,AX,FSM,L11 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,BANANA LATTE,JR,74,1,AX,FSM,L11 - FSM,trim,Maceta grande,,,,Entrada
+2026-09-02,RUNTZ,DCK,70,1,AX,FSM,L12 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,RUNTZ,DCK,34,1,AX,FSM,L12 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,KANDY KUSH,NRQ,40,1,AX,FSM,L12 - FSM,trim,Maceta chica,,,,Entrada
+2026-09-02,RUNTZ,JR,18,1,AX,FSM,L12 - FSM,trim,Maceta chica,,,,Entrada
