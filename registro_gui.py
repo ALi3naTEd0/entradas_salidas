@@ -58,6 +58,8 @@ REPO_FILENAME = "registro.csv"
 
 # Archivo local para caché/backup
 CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
+# Índice masivo: tabla de alias de colaboradores (ALIAS=CODIGO_CANONICO, uno por línea)
+ALIAS_FILE = os.path.join(BASE_PATH, "alias_colaboradores.txt")
 
 # Variable global para almacenar el SHA del archivo
 archivo_sha = None
@@ -551,7 +553,7 @@ class RegistroApp:
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
         
-        VERSION = "v1.0.10"
+        VERSION = "v1.0.11"
         
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
@@ -832,10 +834,205 @@ class RegistroApp:
             if sincronizar_a_gist():
                 messagebox.showinfo("Éxito", mensaje_exito)
                 self.limpiar_campos()
+                return True
             else:
                 messagebox.showerror("Error de sincronización", "No se pudo guardar el registro en GitHub.\n\nVerifica tu conexión, token o permisos.")
+                return False
         except Exception as e:
             messagebox.showerror("Error al guardar", f"No se pudo guardar el registro en el archivo:\n{CSV_FILE}\n\nError: {e}\n\nVerifique permisos de escritura en la carpeta.")
+            return False
+
+    # ------------------- Índice masivo (pegar bloque digitalizado) -------------------
+    def _cargar_alias(self):
+        """Carga la tabla de alias de colaboradores (ALIAS=CANONICO). La crea con
+        valores por defecto si no existe. Devuelve dict {ALIAS_MAYUS: canonico}."""
+        alias = {"CHUCHO": "CHCH", "KFR": "KEF"}
+        try:
+            if os.path.exists(ALIAS_FILE):
+                with open(ALIAS_FILE, encoding="utf-8") as f:
+                    for linea in f:
+                        linea = linea.strip()
+                        if not linea or linea.startswith("#") or "=" not in linea:
+                            continue
+                        a, b = linea.split("=", 1)
+                        if a.strip():
+                            alias[a.strip().upper()] = b.strip()
+            else:
+                with open(ALIAS_FILE, "w", encoding="utf-8") as f:
+                    f.write("# Alias de colaboradores para el Índice masivo.\n")
+                    f.write("# Formato: ALIAS=CODIGO_CANONICO (uno por línea)\n")
+                    f.write("CHUCHO=CHCH\n")
+                    f.write("KFR=KEF\n")
+        except Exception:
+            pass
+        return alias
+
+    def _parsear_bloque(self, texto, supervisor_def, tipo_def):
+        """Parsea el bloque pegado (TSV o CSV) y devuelve (filas_ok, filas_error).
+        filas_ok: listas de 14 columnas ya normalizadas.
+        filas_error: tuplas (fila_original_texto, [motivos])."""
+        alias = self._cargar_alias()
+        campos_orden = CAMPOS + ["tipo"]  # 14 columnas canónicas
+        lineas = [l for l in texto.replace("\r", "").split("\n") if l.strip() != ""]
+        if not lineas:
+            return [], []
+        delim = "\t" if "\t" in lineas[0] else ","
+        primera = [c.strip().lower() for c in lineas[0].split(delim)]
+        tiene_header = ("fecha" in primera and "variedad" in primera)
+        if tiene_header:
+            idx = {campo: (primera.index(campo) if campo in primera else None) for campo in campos_orden}
+            datos = lineas[1:]
+        else:
+            idx = {campo: i for i, campo in enumerate(campos_orden)}
+            datos = lineas
+
+        def celda(campo, cols):
+            j = idx.get(campo)
+            if j is None or j >= len(cols):
+                return ""
+            return cols[j].strip()
+
+        filas_ok, filas_error = [], []
+        for linea in datos:
+            cols = [c.strip() for c in linea.split(delim)]
+            fecha = celda("fecha", cols)
+            variedad = celda("variedad", cols).upper()
+            colaborador = celda("colaborador", cols)
+            colaborador = alias.get(colaborador.upper(), colaborador)
+            gramos = celda("gramos", cols)
+            plantas = celda("plantas", cols)
+            supervisor = celda("supervisor", cols) or supervisor_def
+            sucursal = celda("sucursal", cols)
+            lote = celda("lote", cols)
+            motivo = celda("motivo", cols)
+            maceta = celda("maceta", cols)
+            variedad_mix = celda("variedad_mix", cols)
+            cliente = celda("cliente", cols)
+            no_aplicacion = celda("no_aplicacion", cols)
+            tipo = celda("tipo", cols) or tipo_def
+            # Derivar sucursal desde el lote (p. ej. "L9 - SMB" -> "SMB")
+            if not sucursal and "-" in lote:
+                posible = lote.rsplit("-", 1)[-1].strip().upper()
+                if posible in SUCURSALES:
+                    sucursal = posible
+            # Defaults de plantas
+            if not plantas:
+                plantas = "0" if tipo == "Salida" else "1"
+            # Validaciones
+            motivos = []
+            try:
+                datetime.strptime(fecha, "%Y-%m-%d")
+            except Exception:
+                motivos.append("fecha inválida (usar AAAA-MM-DD)")
+            if tipo not in ("Entrada", "Salida"):
+                motivos.append(f"tipo inválido: '{tipo}'")
+            gramos_norm = gramos
+            try:
+                gval = float(gramos)
+                av = abs(gval)
+                gs = str(int(av)) if av.is_integer() else f"{av:.2f}".rstrip("0").rstrip(".")
+                gramos_norm = ("-" + gs) if tipo == "Salida" else gs
+            except Exception:
+                motivos.append("gramos no numérico")
+            if variedad and variedad not in VARIEDADES and variedad != "MIX":
+                motivos.append(f"variedad desconocida: '{variedad}'")
+            if not variedad:
+                motivos.append("variedad vacía")
+            if sucursal and sucursal not in SUCURSALES:
+                motivos.append(f"sucursal inválida: '{sucursal}'")
+            if not sucursal:
+                motivos.append("sucursal vacía (no derivable del lote)")
+            if not lote:
+                motivos.append("lote vacío")
+            if motivos:
+                filas_error.append((linea, motivos))
+            else:
+                filas_ok.append([fecha, variedad, colaborador, gramos_norm, plantas,
+                                 supervisor, sucursal, lote, motivo, maceta,
+                                 variedad_mix, cliente, no_aplicacion, tipo])
+        return filas_ok, filas_error
+
+    def abrir_indice_masivo(self):
+        """Ventana para pegar un bloque digitalizado (Excel/Sheets), validarlo y anexarlo."""
+        win = tk.Toplevel(self.root)
+        win.title("Índice masivo — pegar bloque digitalizado")
+        win.geometry("900x650")
+        win.transient(self.root)
+
+        ttk.Label(win, text="Pega el bloque desde Excel/Sheets (columnas separadas por TAB) o CSV.",
+                  font=("Arial", 10, "bold")).pack(anchor="w", padx=10, pady=(10, 0))
+        ttk.Label(win, text="Orden de columnas: " + ", ".join(CAMPOS + ["tipo"]) +
+                  ".  El encabezado es opcional (si lo incluyes, se mapea por nombre).",
+                  foreground="#555").pack(anchor="w", padx=10)
+
+        opts = ttk.Frame(win)
+        opts.pack(fill="x", padx=10, pady=6)
+        ttk.Label(opts, text="Supervisor por defecto:").pack(side="left")
+        sup_def = ttk.Combobox(opts, values=SUPERVISORES, state="readonly", width=8)
+        sup_def.pack(side="left", padx=(4, 12))
+        sup_def.set(SUPERVISORES[0] if SUPERVISORES else "")
+        ttk.Label(opts, text="Tipo por defecto:").pack(side="left")
+        tipo_def = ttk.Combobox(opts, values=["Entrada", "Salida"], state="readonly", width=8)
+        tipo_def.pack(side="left", padx=4)
+        tipo_def.set("Entrada")
+
+        txt = tk.Text(win, height=10, wrap="none")
+        txt.pack(fill="both", expand=False, padx=10, pady=(0, 6))
+
+        estado_var = tk.StringVar(value="Pega el bloque y presiona «Validar / Vista previa».")
+        ttk.Label(win, textvariable=estado_var, font=("Arial", 10, "bold")).pack(anchor="w", padx=10)
+
+        prev_frame = ttk.Frame(win)
+        prev_frame.pack(fill="both", expand=True, padx=10, pady=4)
+        cols_prev = ["estado", "fecha", "variedad", "colaborador", "gramos", "plantas",
+                     "supervisor", "sucursal", "lote", "motivo", "tipo"]
+        tree = ttk.Treeview(prev_frame, columns=cols_prev, show="headings", height=10)
+        for c in cols_prev:
+            tree.heading(c, text=c)
+            tree.column(c, width=90 if c != "estado" else 200, anchor="w")
+        vs = ttk.Scrollbar(prev_frame, orient="vertical", command=tree.yview)
+        hs = ttk.Scrollbar(prev_frame, orient="horizontal", command=tree.xview)
+        tree.configure(yscrollcommand=vs.set, xscrollcommand=hs.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        vs.grid(row=0, column=1, sticky="ns")
+        hs.grid(row=1, column=0, sticky="ew")
+        prev_frame.rowconfigure(0, weight=1)
+        prev_frame.columnconfigure(0, weight=1)
+        tree.tag_configure("err", background="#fdecea")
+        tree.tag_configure("ok", background="#eafaf1")
+
+        botones = ttk.Frame(win)
+        botones.pack(fill="x", padx=10, pady=8)
+        estado = {"ok": []}
+
+        def validar():
+            for it in tree.get_children():
+                tree.delete(it)
+            filas_ok, filas_error = self._parsear_bloque(txt.get("1.0", "end"), sup_def.get(), tipo_def.get())
+            estado["ok"] = filas_ok
+            for fila in filas_ok:
+                tree.insert("", "end", tags=("ok",), values=[
+                    "OK", fila[0], fila[1], fila[2], fila[3], fila[4], fila[5], fila[6], fila[7], fila[8], fila[13]])
+            for linea, motivos in filas_error:
+                tree.insert("", "end", tags=("err",), values=["✗ " + "; ".join(motivos)] + [""] * (len(cols_prev) - 1))
+            estado_var.set(f"{len(filas_ok)} válidas · {len(filas_error)} con error. "
+                           f"Solo se anexarán las válidas.")
+            btn_anexar.config(text=f"Anexar {len(filas_ok)} válidas",
+                              state=("normal" if filas_ok else "disabled"))
+
+        def anexar():
+            filas = estado["ok"]
+            if not filas:
+                return
+            if not messagebox.askyesno("Confirmar", f"¿Anexar {len(filas)} filas a registro.csv y sincronizar?"):
+                return
+            if self._escribir_filas(filas, f"{len(filas)} filas anexadas y sincronizadas correctamente."):
+                win.destroy()
+
+        ttk.Button(botones, text="Validar / Vista previa", command=validar).pack(side="left")
+        btn_anexar = ttk.Button(botones, text="Anexar 0 válidas", command=anexar, state="disabled")
+        btn_anexar.pack(side="left", padx=8)
+        ttk.Button(botones, text="Cerrar", command=win.destroy).pack(side="right")
 
     def crear_widgets(self):
         tab_control = ttk.Notebook(self.root)
@@ -867,6 +1064,10 @@ class RegistroApp:
         self.tipo_movimiento = ttk.Combobox(frame, values=["Entrada", "Salida"], state="readonly", width=10)
         self.tipo_movimiento.grid(row=0, column=3, padx=5, pady=2)
         self.tipo_movimiento.set("Entrada")
+
+        # Índice masivo: pegar un bloque digitalizado y anexarlo con validación
+        self.btn_indice_masivo = ttk.Button(frame, text="📋 Índice masivo", command=self.abrir_indice_masivo)
+        self.btn_indice_masivo.grid(row=1, column=3, padx=5, pady=2)
 
         # Motivo y Quién (visibilidad dinámica)
         self.label_motivo = ttk.Label(frame, text="Motivo:")

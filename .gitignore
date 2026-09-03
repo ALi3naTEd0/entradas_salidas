@@ -2,6 +2,9 @@
 gist_config.txt
 github_config.txt
 
+# Índice masivo: tabla de alias local (se autogenera)
+alias_colaboradores.txt
+
 # Archivos locales de datos
 registro.csv
 registro_local.csv
