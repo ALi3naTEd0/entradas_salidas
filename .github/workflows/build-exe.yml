@@ -75,6 +75,27 @@ jobs:
               --title "Registro E/S $tag" --generate-notes
           fi
 
+      - name: Update docs version label
+        shell: bash
+        run: |
+          v="${{ steps.ver.outputs.version }}"
+          sed -i -E 's#(<span class="version">)v[0-9]+\.[0-9]+\.[0-9]+(</span>)#\1v'"$v"'\2#' docs/index.html
+          if git diff --quiet -- docs/index.html; then
+            echo "docs/index.html ya estaba en v$v; nada que commitear."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          git commit -m "docs: versión v$v (auto)"
+          # Reintentar por si la app empujó registro.csv mientras tanto (rebase: archivos distintos)
+          for i in 1 2 3; do
+            if git push origin HEAD:main; then echo "docs actualizado a v$v"; exit 0; fi
+            echo "push rechazado, reintentando con rebase ($i)..."
+            git pull --rebase origin main
+          done
+          echo "No se pudo empujar la actualización de docs tras 3 intentos"; exit 1
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
