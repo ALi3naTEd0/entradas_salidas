@@ -44,5 +44,6 @@ env/
 *.swp
 *.swo
 
-# PyInstaller
+# PyInstaller / instalador
 *.spec
+installer_output/

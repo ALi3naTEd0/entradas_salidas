@@ -3,6 +3,9 @@ name: Build Windows EXE
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write   # necesario para publicar el Release
+
 jobs:
   build:
     runs-on: windows-latest
@@ -29,12 +32,51 @@ jobs:
             exit 1
           }
 
+      - name: Get app version
+        id: ver
+        shell: bash
+        run: |
+          v=$(grep -oE 'APP_VERSION = "v[0-9]+\.[0-9]+\.[0-9]+"' registro_gui.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          if [ -z "$v" ]; then echo "No se pudo leer APP_VERSION de registro_gui.py"; exit 1; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          echo "Versión detectada: v$v"
+
       - name: Build EXE with PyInstaller
         run: |
           pyinstaller --onefile --noconfirm --windowed --name registro_gui --icon=assets/icon.ico --hidden-import tksheet --hidden-import babel.numbers registro_gui.py
 
-      - name: Upload EXE artifact
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) {
+            Write-Host 'Inno Setup no encontrado; instalando via choco...'
+            choco install innosetup --no-progress -y
+          }
+          if (!(Test-Path $iscc)) { $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe" }
+          & $iscc /DMyAppVersion=${{ steps.ver.outputs.version }} installer.iss
+          if (!(Test-Path 'installer_output/RegistroES-Setup.exe')) {
+            Write-Error 'No se generó installer_output/RegistroES-Setup.exe'
+            exit 1
+          }
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.ver.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "El release $tag ya existe; reemplazando el instalador."
+            gh release upload "$tag" installer_output/RegistroES-Setup.exe --clobber
+          else
+            gh release create "$tag" installer_output/RegistroES-Setup.exe \
+              --title "Registro E/S $tag" --generate-notes
+          fi
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: registro_gui-exe
-          path: dist/registro_gui.exe
+          name: RegistroES-Setup
+          path: installer_output/RegistroES-Setup.exe

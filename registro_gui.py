@@ -56,6 +56,45 @@ GITHUB_REPO, GITHUB_TOKEN = cargar_config()
 GITHUB_BRANCH = "main"
 REPO_FILENAME = "registro.csv"
 
+# Versión de la app (fuente única; la lee el workflow para etiquetar el Release)
+APP_VERSION = "v1.0.11"
+
+def _version_tuple(s):
+    """Convierte 'v1.2.3' o '1.2.3' en (1,2,3) para comparar versiones."""
+    s = (s or "").strip().lstrip("vV")
+    partes = []
+    for p in s.split("."):
+        num = ""
+        for ch in p:
+            if ch.isdigit():
+                num += ch
+            else:
+                break
+        partes.append(int(num) if num else 0)
+    return tuple(partes) if partes else (0,)
+
+def obtener_ultima_version():
+    """Consulta el último Release en GitHub. Devuelve (tag, html_url, asset_url) o None si falla."""
+    try:
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+        headers = {"Accept": "application/vnd.github+json"}
+        if GITHUB_TOKEN and "TU_TOKEN" not in GITHUB_TOKEN.upper():
+            headers["Authorization"] = f"token {GITHUB_TOKEN}"
+        r = requests.get(url, headers=headers, timeout=8)
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        tag = data.get("tag_name", "")
+        html_url = data.get("html_url", f"https://github.com/{GITHUB_REPO}/releases/latest")
+        asset_url = ""
+        for a in data.get("assets", []):
+            if a.get("name", "").lower().endswith(".exe"):
+                asset_url = a.get("browser_download_url", "")
+                break
+        return tag, html_url, asset_url
+    except Exception:
+        return None
+
 # Archivo local para caché/backup
 CSV_FILE = os.path.join(BASE_PATH, "registro.csv")
 # Índice masivo: tabla de alias de colaboradores (ALIAS=CODIGO_CANONICO, uno por línea)
@@ -549,12 +588,57 @@ class RegistroApp:
         btn_editar = ttk.Button(self.root, text="Filtrar registro", command=self.abrir_editor_registros)
         btn_editar.grid(row=1, column=0, pady=5, sticky="w")
     
+    def verificar_actualizacion(self, silencioso=True):
+        """Consulta el último Release en un hilo; si hay versión nueva, avisa y ofrece descargar.
+        silencioso=True: no muestra nada si estás al día o si falla la red."""
+        import threading
+
+        def worker():
+            info = obtener_ultima_version()
+
+            def en_ui():
+                if info is None:
+                    if not silencioso:
+                        messagebox.showinfo("Actualizaciones",
+                                            "No se pudo consultar las actualizaciones.\nVerifica tu conexión.")
+                    return
+                tag, html_url, asset_url = info
+                destino = asset_url or html_url
+                if _version_tuple(tag) > _version_tuple(APP_VERSION):
+                    self._mostrar_indicador_update(tag, destino)
+                    if messagebox.askyesno("Actualización disponible",
+                                           f"Hay una nueva versión disponible: {tag}\n"
+                                           f"Tu versión: {APP_VERSION}\n\n¿Descargar ahora?"):
+                        try:
+                            import webbrowser
+                            webbrowser.open_new_tab(destino)
+                        except Exception:
+                            pass
+                elif not silencioso:
+                    messagebox.showinfo("Actualizaciones", f"Estás en la última versión ({APP_VERSION}).")
+
+            try:
+                self.root.after(0, en_ui)
+            except Exception:
+                pass
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _mostrar_indicador_update(self, tag, url):
+        """Muestra un enlace '⬆ Actualizar' en la barra de estado cuando hay versión nueva."""
+        try:
+            self.lbl_update.config(text=f"⬆ Actualizar a {tag}", fg=LINK_COLOR, cursor="hand2")
+            self.lbl_update.bind("<Button-1>", lambda e: __import__("webbrowser").open_new_tab(url))
+            self.lbl_update.pack(side="right", padx=8)
+        except Exception:
+            pass
+
     def crear_barra_estado(self):
         """Crea la barra de estado inferior con indicador de conexión"""
         import webbrowser
-        
-        VERSION = "v1.0.11"
-        
+
+        VERSION = APP_VERSION
+
         status_frame = ttk.Frame(self.root)
         status_frame.grid(row=2, column=0, sticky="ew", pady=(10, 5), padx=5)
         
@@ -630,10 +714,20 @@ class RegistroApp:
         except Exception:
             pass
         
-        # Versión
-        lbl_version = tk.Label(status_frame, text=VERSION, fg="#7f8c8d", font=STATUS_TEXT_FONT)
+        # Versión (clic = buscar actualizaciones manualmente)
+        lbl_version = tk.Label(status_frame, text=VERSION, fg="#7f8c8d", cursor="hand2", font=STATUS_TEXT_FONT)
         lbl_version.pack(side="right", padx=(10, 5))
-        
+        lbl_version.bind("<Button-1>", lambda e: self.verificar_actualizacion(silencioso=False))
+
+        # Indicador de actualización disponible (oculto hasta que se detecte una versión nueva)
+        self.lbl_update = tk.Label(status_frame, text="", fg=LINK_COLOR, font=STATUS_TEXT_FONT)
+
+        # Chequeo automático al iniciar (en segundo plano, no bloquea ni molesta si estás al día)
+        try:
+            self.root.after(1500, lambda: self.verificar_actualizacion(silencioso=True))
+        except Exception:
+            pass
+
         # Botón para refrescar conexión
         btn_refresh = ttk.Button(status_frame, text="↻ Sincronizar", width=12, command=self.refrescar_conexion)
         btn_refresh.pack(side="right", padx=5)
