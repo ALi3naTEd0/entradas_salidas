@@ -21,43 +21,61 @@ else:
 # Archivo de configuración para credenciales de GitHub
 CONFIG_FILE = os.path.join(BASE_PATH, "github_config.txt")
 
+# Estado de la configuración (para avisar en la GUI sin abortar el arranque)
+CONFIG_OK = True
+CONFIG_MSG = ""
+
 def cargar_config():
-    """Carga la configuración del repo desde archivo github_config.txt"""
+    """Carga la configuración del repo desde github_config.txt.
+
+    NUNCA aborta el proceso: si falta o es inválida, deja CONFIG_OK=False y la
+    app arranca en modo local (sin sincronización). Esto evita que el ejecutable
+    'windowed' se cierre en silencio en una instalación nueva.
+    """
+    global CONFIG_OK, CONFIG_MSG
     if not os.path.exists(CONFIG_FILE):
-        # Crear archivo de ejemplo
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            f.write("usuario/nombre-repo\nTU_TOKEN_AQUI\n")
-        print(f"ERROR: Configura tus credenciales en: {CONFIG_FILE}")
-        print("Línea 1: usuario/repo (ej: ALi3naTEd0/entradas_salidas)")
-        print("Línea 2: TOKEN de GitHub con permiso 'repo'")
-        sys.exit(1)
-    
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        lineas = f.read().strip().split("\n")
-    
-    if len(lineas) < 2:
-        print(f"ERROR: El archivo {CONFIG_FILE} debe tener 2 líneas:")
-        print("Línea 1: usuario/repo")
-        print("Línea 2: TOKEN de GitHub")
-        sys.exit(1)
-    
-    repo = lineas[0].strip()
-    token = lineas[1].strip()
-    
-    if "TU_TOKEN_AQUI" in token or "/" not in repo:
-        print(f"ERROR: Edita el archivo {CONFIG_FILE} con tus credenciales reales")
-        sys.exit(1)
-    
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                f.write("usuario/nombre-repo\nTU_TOKEN_AQUI\n")
+        except Exception:
+            pass
+        CONFIG_OK = False
+        CONFIG_MSG = ("Falta configurar GitHub para sincronizar.\n\n"
+                      f"Edita el archivo:\n{CONFIG_FILE}\n\n"
+                      "Línea 1: usuario/repo (ej: ALi3naTEd0/entradas_salidas)\n"
+                      "Línea 2: token de GitHub con permiso 'repo'.\n\n"
+                      "La app funciona en modo local; la sincronización se activará "
+                      "al configurarlo y reiniciar.")
+        return "", ""
+
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            lineas = f.read().strip().split("\n")
+    except Exception as e:
+        CONFIG_OK = False
+        CONFIG_MSG = f"No se pudo leer {CONFIG_FILE}: {e}\n\nLa app funciona en modo local."
+        return "", ""
+
+    repo = lineas[0].strip() if len(lineas) >= 1 else ""
+    token = lineas[1].strip() if len(lineas) >= 2 else ""
+
+    if len(lineas) < 2 or "TU_TOKEN_AQUI" in token.upper() or "/" not in repo:
+        CONFIG_OK = False
+        CONFIG_MSG = ("Configura tus credenciales reales en:\n"
+                      f"{CONFIG_FILE}\n\nLínea 1: usuario/repo\nLínea 2: token de GitHub.\n\n"
+                      "La app funciona en modo local mientras tanto.")
+        return repo, token
+
     return repo, token
 
-# Cargar configuración
+# Cargar configuración (no aborta; ver CONFIG_OK)
 GITHUB_REPO, GITHUB_TOKEN = cargar_config()
 # Branch to use in GitHub links
 GITHUB_BRANCH = "main"
 REPO_FILENAME = "registro.csv"
 
 # Versión de la app (fuente única; la lee el workflow para etiquetar el Release)
-APP_VERSION = "v1.0.11"
+APP_VERSION = "v1.0.12"
 
 def _version_tuple(s):
     """Convierte 'v1.2.3' o '1.2.3' en (1,2,3) para comparar versiones."""
@@ -727,6 +745,13 @@ class RegistroApp:
             self.root.after(1500, lambda: self.verificar_actualizacion(silencioso=True))
         except Exception:
             pass
+
+        # Aviso visible si la configuración de GitHub no está lista (modo local)
+        if not CONFIG_OK:
+            try:
+                self.root.after(300, lambda: messagebox.showwarning("Configuración de GitHub", CONFIG_MSG))
+            except Exception:
+                pass
 
         # Botón para refrescar conexión
         btn_refresh = ttk.Button(status_frame, text="↻ Sincronizar", width=12, command=self.refrescar_conexion)
@@ -2315,6 +2340,11 @@ class RegistroApp:
             os._exit(0)
 
 if __name__ == "__main__":
+    # Smoke test para CI: si llegamos aquí, todos los imports (incl. hidden-imports
+    # de PyInstaller) cargaron y el arranque no abortó. No abre GUI. Sale 0 = OK.
+    if "--selftest" in sys.argv:
+        print(f"selftest OK {APP_VERSION} (config_ok={CONFIG_OK})")
+        sys.exit(0)
     root = tk.Tk()
     app = RegistroApp(root)
     root.mainloop()

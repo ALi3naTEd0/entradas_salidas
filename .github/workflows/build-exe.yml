@@ -46,6 +46,28 @@ jobs:
         run: |
           pyinstaller --onefile --noconfirm --windowed --name registro_gui --icon=assets/icon.ico --hidden-import tksheet --hidden-import babel.numbers registro_gui.py
 
+      - name: Smoke test EXE (--selftest en carpeta limpia)
+        shell: pwsh
+        run: |
+          $exe = "dist\registro_gui.exe"
+          if (!(Test-Path $exe)) { Write-Error "No existe $exe"; exit 1 }
+          # Carpeta limpia sin github_config.txt: simula una instalación nueva.
+          $work = Join-Path $env:TEMP "smoke"
+          New-Item -ItemType Directory -Force -Path $work | Out-Null
+          $target = Join-Path $work "registro_gui.exe"
+          Copy-Item $exe $target -Force
+          $p = Start-Process -FilePath $target -ArgumentList "--selftest" -WorkingDirectory $work -PassThru
+          if (-not $p.WaitForExit(30000)) {
+            try { $p.Kill() } catch {}
+            Write-Error "El EXE no terminó el --selftest en 30s (posible cuelgue al arrancar)."
+            exit 1
+          }
+          if ($p.ExitCode -ne 0) {
+            Write-Error "El EXE falla al arrancar (--selftest exit $($p.ExitCode)). Falta un hidden-import o el arranque aborta."
+            exit 1
+          }
+          Write-Host "OK: el EXE arranca correctamente (--selftest exit 0)."
+
       - name: Build installer (Inno Setup)
         shell: pwsh
         run: |
