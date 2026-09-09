@@ -1981,3 +1981,9 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-09-07,SUGAR CANE,,7,0,DRE,SMB,L11 - SMB,traslado,,,,,Entrada
 2026-09-07,MIX,,-67,0,DRE,FSM,L7 - FSM,traslado,,MIX,,,Salida
 2026-09-07,MIX,,67,0,DRE,SMB,L7 - SMB,traslado,,MIX,,,Entrada
+2026-09-08,KANDY KUSH,JR,33,1,AX,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-09-08,RECON,DCK,42,1,AX,RP,L9 - RP,trim,Maceta grande,,,,Entrada
+2026-09-08,RUNTZ,DCK,20,1,AX,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-08,RUNTZ,NRQ,34,1,AX,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-08,KING KUSH BREATH,JR,13,1,AX,RP,L9 - RP,trim,Maceta chica,,,,Entrada
+2026-09-08,KANDY KUSH,DCK,45,1,AX,RP,L9 - RP,trim,Maceta grande,,,,Entrada
