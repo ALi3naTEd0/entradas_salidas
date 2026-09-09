@@ -1971,3 +1971,5 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-09-07,BANANA LATTE,JR,86,1,AX,FSM,L12 - FSM,trim,Maceta grande,,,,Entrada
 2026-09-07,BANANA LATTE,,-2395,0,DRE,FSM,L9 - FSM,traslado,,,,,Salida
 2026-09-07,BANANA LATTE,,2395,0,DRE,SMB,L9 - SMB,traslado,,,,,Entrada
+2026-09-07,RUNTZ,,-621,0,DRE,FSM,L10 - FSM,traslado,,,,,Salida
+2026-09-07,RUNTZ,,621,0,DRE,SMB,L10 - SMB,traslado,,,,,Entrada
