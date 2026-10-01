@@ -2058,3 +2058,179 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-09-26,KANDY KUSH,,-13,0,DRE,SMB,L10 - SMB,venta,,,DRE,,Salida
 2026-09-29,KANDY KUSH,,-6,0,DRE,SMB,L10 - SMB,venta,,,CHUCHO,,Salida
 2026-09-29,APPLE FRITTER,,-6,0,DRE,SMB,L10 - SMB,venta,,,CHUCHO,,Salida
+2026-10-01,AK-47,,-652,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-708,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-231,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,MIX,,-206,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,MOZZARELLA,,13,0,DRE,FSM,L1 - FSM,ajuste,,,,,Entrada
+2026-10-01,RED RED WINE,,-64,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-167,0,DRE,FSM,L1 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-111,0,DRE,FSM,L10 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-904,0,DRE,FSM,L10 - FSM,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-173,0,DRE,FSM,L10 - FSM,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-150,0,DRE,FSM,L10 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,313,0,DRE,FSM,L10 - FSM,ajuste,,,,,Entrada
+2026-10-01,RECON,,15,0,DRE,FSM,L10 - FSM,ajuste,,,,,Entrada
+2026-10-01,RUNTZ,,378,0,DRE,FSM,L10 - FSM,ajuste,,,,,Entrada
+2026-10-01,SUGAR CANE,,82,0,DRE,FSM,L10 - FSM,ajuste,,,,,Entrada
+2026-10-01,ZALLAH BREAD,,-49,0,DRE,FSM,L10 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-74,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-1444,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-208,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-86,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-91,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-294,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,RECON,,-79,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-292,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,SUGAR CANE,,-88,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,-621,0,DRE,FSM,L11 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-2077,0,DRE,FSM,L12 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-40,0,DRE,FSM,L12 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-42,0,DRE,FSM,L12 - FSM,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-156,0,DRE,FSM,L12 - FSM,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,-279,0,DRE,FSM,L12 - FSM,ajuste,,,,,Salida
+2026-10-01,AK-47,,-309,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-1027,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-371,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-48,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,MIX,,-116,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,MOZZARELLA,,-516,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,ORANGEL,,23,0,DRE,FSM,L2 - FSM,ajuste,,,,,Entrada
+2026-10-01,RED RED WINE,,-400,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-161,0,DRE,FSM,L2 - FSM,ajuste,,,,,Salida
+2026-10-01,AK-47,,255,0,DRE,FSM,L3 - FSM,ajuste,,,,,Entrada
+2026-10-01,BANANA LATTE,,-399,0,DRE,FSM,L3 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-285,0,DRE,FSM,L3 - FSM,ajuste,,,,,Salida
+2026-10-01,MOZZARELLA,,-82,0,DRE,FSM,L3 - FSM,ajuste,,,,,Salida
+2026-10-01,ORANGEL,,-23,0,DRE,FSM,L3 - FSM,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,592,0,DRE,FSM,L3 - FSM,ajuste,,,,,Entrada
+2026-10-01,AK-47,,-31,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-59,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-1351,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,GRAN JEFA,,-12,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-672,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-357,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,MIX,,941,0,DRE,FSM,L4 - FSM,ajuste,,,,,Entrada
+2026-10-01,RECON,,-61,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-121,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-59,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-31,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,-39,0,DRE,FSM,L4 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-31,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-814,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-169,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-30,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-566,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,MOZZARELLA,,234,0,DRE,FSM,L5 - FSM,ajuste,,,,,Entrada
+2026-10-01,RED RED WINE,,-75,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,116,0,DRE,FSM,L5 - FSM,ajuste,,,,,Entrada
+2026-10-01,SUGAR CANE,,-24,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,43,0,DRE,FSM,L5 - FSM,ajuste,,,,,Entrada
+2026-10-01,ZALLAH BREAD,,-45,0,DRE,FSM,L5 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,27,0,DRE,FSM,L6 - FSM,ajuste,,,,,Entrada
+2026-10-01,BANANA LATTE,,-105,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-122,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,GRAN JEFA,,-82,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-227,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-41,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,165,0,DRE,FSM,L6 - FSM,ajuste,,,,,Entrada
+2026-10-01,RECON,,-96,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-80,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-134,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,-74,0,DRE,FSM,L6 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-237,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-1758,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-117,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-234,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,MIX,,67,0,DRE,FSM,L7 - FSM,ajuste,,,,,Entrada
+2026-10-01,SUGAR CANE,,-74,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-67,0,DRE,FSM,L7 - FSM,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,53,0,DRE,FSM,L7 - FSM,ajuste,,,,,Entrada
+2026-10-01,AK-47,,532,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,APPLE FRITTER,,196,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,BANANA LATTE,,3517,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,GRAN JEFA,,74,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,KANDY KUSH,,1145,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,KING KUSH BREATH,,72,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,MICHAEL JORDAN,,1164,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,MIX,,1194,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,SUGAR CANE,,98,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,WEDDING CAKE,,180,0,DRE,FSM,L8 - FSM,ajuste,,,,,Entrada
+2026-10-01,ZALLAH BREAD,,-24,0,DRE,FSM,L8 - FSM,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-24,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,1775,0,DRE,FSM,L9 - FSM,ajuste,,,,,Entrada
+2026-10-01,KANDY KUSH,,-132,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-20,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-874,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,SUGAR CANE,,-105,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-155,0,DRE,FSM,L9 - FSM,ajuste,,,,,Salida
+2026-10-01,MIX,,-1824,0,DRE,RP,L1 - RP,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-777,0,DRE,RP,L1 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-39,0,DRE,RP,L10 - RP,ajuste,,,,,Salida
+2026-10-01,SUGAR CANE,,32,0,DRE,RP,L11 - RP,ajuste,,,,,Entrada
+2026-10-01,AK-47,,35,0,DRE,RP,L2 - RP,ajuste,,,,,Entrada
+2026-10-01,BANANA LATTE,,-88,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,KOSHER KUSH,,-33,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,MIX,,-45,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,MOZZARELLA,,-613,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,ORANGEL,,-35,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-170,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-140,0,DRE,RP,L2 - RP,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,243,0,DRE,RP,L2 - RP,ajuste,,,,,Entrada
+2026-10-01,AK-47,,-539,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-497,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-531,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,MIX,,-74,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-469,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-54,0,DRE,RP,L3 - RP,ajuste,,,,,Salida
+2026-10-01,AK-47,,-325,0,DRE,RP,L4 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-573,0,DRE,RP,L4 - RP,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-389,0,DRE,RP,L4 - RP,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-262,0,DRE,RP,L4 - RP,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-147,0,DRE,RP,L4 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-2269,0,DRE,RP,L5 - RP,ajuste,,,,,Salida
+2026-10-01,RED RED WINE,,-117,0,DRE,RP,L5 - RP,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-1037,0,DRE,RP,L5 - RP,ajuste,,,,,Salida
+2026-10-01,AK-47,,320,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,APPLE FRITTER,,-193,0,DRE,RP,L6 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-717,0,DRE,RP,L6 - RP,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-153,0,DRE,RP,L6 - RP,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,572,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,KOSHER KUSH,,1,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,MICHAEL JORDAN,,-825,0,DRE,RP,L6 - RP,ajuste,,,,,Salida
+2026-10-01,MIX,,991,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,MOZZARELLA,,262,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,ORANGEL,,2,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,RED RED WINE,,93,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,RUNTZ,,1,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,WEDDING CAKE,,872,0,DRE,RP,L6 - RP,ajuste,,,,,Entrada
+2026-10-01,APPLE FRITTER,,-32,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,GRAN JEFA,,-145,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-112,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-25,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-33,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,RECON,,-20,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,SUGAR CANE,,-102,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,WEDDING CAKE,,-115,0,DRE,RP,L6 - SMB,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-79,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-662,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-211,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-178,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-103,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,RECON,,-15,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-116,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,SUGAR CANE,,-82,0,DRE,RP,L7 - RP,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-258,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,BANANA LATTE,,-1581,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-21,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,KOSHER KUSH,,-71,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-366,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-69,0,DRE,RP,L8 - RP,ajuste,,,,,Salida
+2026-10-01,APPLE FRITTER,,-18,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,BLACKBERRY HONEY,,-130,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,KANDY KUSH,,-479,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,KING KUSH BREATH,,-91,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,MICHAEL JORDAN,,-514,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,RECON,,-142,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,RUNTZ,,-330,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
+2026-10-01,ZALLAH BREAD,,-301,0,DRE,RP,L9 - RP,ajuste,,,,,Salida
