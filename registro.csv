@@ -2262,3 +2262,50 @@ fecha,variedad,colaborador,gramos,plantas,supervisor,sucursal,lote,motivo,maceta
 2026-10-13,KANDY KUSH,,-125,0,DRE,SMB,L10 - SMB,venta,,,CHUCHO,,Salida
 2026-10-13,KING KUSH BREATH,,-100,0,DRE,SMB,L10 - SMB,venta,,,CHUCHO,,Salida
 2026-10-10,MICHAEL JORDAN,,-12.5,0,DRE,SMB,L10 - SMB,venta,,,KEFLO,,Salida
+2026-10-17,ZALLAH BREAD,DCK,66,1,AX,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-17,MICHAEL JORDAN,KRN,35,1,AX,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-17,APPLE FRITTER,KRN,43,1,AX,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-17,APPLE FRITTER,DCK,49,1,AX,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-17,ZALLAH BREAD,KRN,36,1,AX,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-22,MICHAEL JORDAN,KRN,62,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,MICHAEL JORDAN,KRN,56,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,MICHAEL JORDAN,JR,56,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,RUNTZ,DCK,48,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,ZALLAH BREAD,DCK,56,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,RUNTZ,KRN,76,1,AX,SMB,L13 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-22,RUNTZ,DCK,43,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,BANANA LATTE,DCK,46,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,RUNTZ,KRN,70,1,AX,SMB,L13 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-22,RUNTZ,KRN,8,1,AX,SMB,L13 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-12,APPLE FRITTER,KRN,78,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-12,ZALLAH BREAD,DCK,39,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-12,APPLE FRITTER,KRN,77,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-12,APPLE FRITTER,DCK,73,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-13,ZALLAH BREAD,KRN,80,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-13,ZALLAH BREAD,KRN,85,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-13,ZALLAH BREAD,DCK,78,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-13,KANDY KUSH,DCK,41,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-13,ZALLAH BREAD,DCK,71,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-13,ZALLAH BREAD,DCK,67,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-13,ZALLAH BREAD,KRN,78,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-14,ZALLAH BREAD,KRN,83,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-14,ZALLAH BREAD,KRN,79,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-15,RUNTZ,KRN,53,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-15,APPLE FRITTER,DCK,52,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-15,APPLE FRITTER,DCK,51,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-15,ZALLAH BREAD,KRN,36,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-15,ZALLAH BREAD,KRN,87,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-15,ZALLAH BREAD,DCK,85,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-15,RUNTZ,DCK,31,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-15,ZALLAH BREAD,KRN,73,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-20,KANDY KUSH,DCK,62,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-20,KANDY KUSH,KRN,51,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-20,KANDY KUSH,KRN,14,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-20,KANDY KUSH,DCK,59,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-20,MICHAEL JORDAN,KRN,73,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-20,BANANA LATTE,KRN,44,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,MICHAEL JORDAN,DCK,73,1,LE,SMB,L12 - SMB,trim,Maceta grande,,,,Entrada
+2026-10-22,MICHAEL JORDAN,DCK,52,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,KANDY KUSH,KRN,54,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,MICHAEL JORDAN,DCK,44,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
+2026-10-22,BANANA LATTE,JR,54,1,LE,SMB,L12 - SMB,trim,Maceta chica,,,,Entrada
